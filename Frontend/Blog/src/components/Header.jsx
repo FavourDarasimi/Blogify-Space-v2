@@ -3,7 +3,7 @@ import React from "react";
 const Header = () => {
   return (
     <section className="w-full py-20 md:py-28 lg:py-36 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-pink-50"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-pink-50"></div>
 
       <div className="container px-4 md:px-6 relative">
         <div className="flex flex-col items-center text-center space-y-8 max-w-4xl mx-auto">

@@ -12,6 +12,9 @@ import CreateBlog from "./pages/CreateBlog";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import SavedPost from "./pages/SavedPost";
+import Trending from "./pages/Trending";
+import Footer from "./components/Footer";
+import Latest from "./pages/Latest";
 
 function App() {
   const [setShowLogin] = useState(false);
@@ -27,11 +30,14 @@ function App() {
           element={<AccountAccess setShowLogin={setShowLogin} />}
         />
         <Route path="/" element={<Home />} />
+        <Route path="/trending" element={<Trending />} />
+        <Route path="/latest" element={<Latest />} />
         <Route path="/categories" element={<CategoryBlogs />} />
         <Route path="/detail/:postId" element={<BlogDetail />} />
         <Route path="/profile/" element={<Profile />} />
         <Route path="/saved/post/" element={<SavedPost />} />
       </Routes>
+      <Footer />
       <ToastContainer />
     </div>
   );

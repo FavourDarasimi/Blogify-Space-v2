@@ -1,17 +1,18 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+
 import CategoryFilter from "../components/CategoryFilter";
 import BlogCard from "../components/BlogCard";
-import { TrendingUp } from "lucide-react";
-import { getTopPost } from "../endpoint/api";
+import { Clock, ArrowLeft } from "lucide-react";
+import { getlatestPost } from "../endpoint/api";
 
-const Trending = () => {
+const Latest = () => {
   const [activeCategory, setActiveCategory] = useState("Discover");
   const [posts, setPost] = useState([]);
 
   useEffect(() => {
     const getTrendingPost = async () => {
       try {
-        const response = await getTopPost();
+        const response = await getlatestPost();
         const trendingPosts = response.data;
         const filteredPosts =
           activeCategory === "Discover"
@@ -28,21 +29,21 @@ const Trending = () => {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <section className="w-full py-16 md:py-24 relative overflow-hidden border-b">
-        <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-pink-50"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-indigo-50"></div>
 
         <div className="container px-4 md:px-6 relative">
           <div className="flex items-center gap-3 mb-6">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-50">
-              <TrendingUp className="w-6 h-6 text-red-600" />
+              <Clock className="w-6 h-6 text-red-600" />
             </div>
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight font-serif">
-              Trending Stories
+              Latest Articles
             </h1>
           </div>
 
           <p className="text-base md:text-lg text-gray-600 max-w-2xl">
-            Discover the most popular articles and stories that everyone is
-            talking about right now
+            Fresh perspectives and new stories published recently. Stay up to
+            date with our newest content
           </p>
         </div>
       </section>
@@ -66,8 +67,8 @@ const Trending = () => {
 
         {/* Posts Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {posts.map((post, idx) => (
-            <BlogCard key={post.id ?? idx} post={post} />
+          {posts.map((post) => (
+            <BlogCard post={post} />
           ))}
         </div>
 
@@ -83,4 +84,4 @@ const Trending = () => {
   );
 };
 
-export default Trending;
+export default Latest;

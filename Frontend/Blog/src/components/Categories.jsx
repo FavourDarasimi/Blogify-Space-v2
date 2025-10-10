@@ -4,7 +4,8 @@ import { Context } from "../context/Context";
 import { getCategories, getCategoryPost } from "../endpoint/api";
 
 const Categories = ({ show, setShow }) => {
-  const { setCategoryPosts, isActive, setIsActive, isHomePage } = useContext(Context);
+  const { setCategoryPosts, isActive, setIsActive, isHomePage } =
+    useContext(Context);
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
@@ -12,7 +13,7 @@ const Categories = ({ show, setShow }) => {
       try {
         const cat = await getCategories();
 
-        setCategories(cat);
+        setCategories(cat.data);
       } catch (error) {
         console.log(error);
       }
@@ -64,7 +65,9 @@ const Categories = ({ show, setShow }) => {
               <p
                 key={category.id}
                 className={`   cursor-pointer lg:text-17 md:text-15 sm:text-13 font-semibold mb-5 ${
-                  isActive == category.id ? "border-1 bg-red-600 text-white p-2 rounded-lg" : ""
+                  isActive == category.id
+                    ? "border-1 bg-red-600 text-white p-2 rounded-lg"
+                    : ""
                 }`}
                 onClick={() => handleClick(category.id)}
               >
