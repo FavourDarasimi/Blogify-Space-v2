@@ -4,9 +4,14 @@ from .models import Category,Post,Comment,SavedPost
 from accounts.serializers import UserSerializer
 
 class CategorySerializer(serializers.ModelSerializer):
+    num_of_posts =serializers.SerializerMethodField()
     class Meta:
         model = Category
-        fields = ['id', 'name']
+        fields = ['id', 'name','description','num_of_posts']
+
+    def get_num_of_posts(self,obj):
+        post = Post.objects.filter(category=obj)
+        return post.count()    
 
 
 class PostSerializer(serializers.ModelSerializer):

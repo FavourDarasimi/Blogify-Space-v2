@@ -58,6 +58,9 @@ export default {
       fontSize: {
         "6xl": "7rem",
       },
+      fontFamily: {
+        sans: ['"Inter"', "ui-sans-serif", "system-ui", "sans-serif"],
+      },
       backgroundImage: {
         "custom-image": "url('/background.jpg')",
       },

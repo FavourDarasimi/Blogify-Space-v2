@@ -82,10 +82,12 @@ class CategoryPostView(APIView):
         category = Category.objects.get(pk=pk)
         posts = Post.objects.filter(category__pk=pk)
         serializer = PostSerializer(posts,many=True,context={'request':request})
+        category_serializer = CategorySerializer(category,context={'request':request})
         response = {
-            f'Posts under {category}':serializer.data
+            'data':serializer.data,
+            'category_data':category_serializer.data,
         }
-        return Response(data=serializer.data,status=status.HTTP_200_OK)
+        return Response(data=response,status=status.HTTP_200_OK)
         
 
 class CreateCommentView(APIView):

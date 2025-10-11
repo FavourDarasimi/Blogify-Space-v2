@@ -5,6 +5,8 @@ import { Context } from "../context/Context";
 import { logout } from "../endpoint/api";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { FaRegCircleUser } from "react-icons/fa6";
+import { MdAdd } from "react-icons/md";
 
 const Navbar = () => {
   const location = useLocation();
@@ -33,12 +35,12 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-xl">
-      <div className="container mx-auto px-4 flex h-20 items-center justify-between max-w-7xl">
+      <div className="md:px-10 px-5 flex h-20 items-center justify-between ">
         {/* Left Side */}
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-20">
           <Link
             to="/"
-            className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight font-serif text-gray-900 hover:text-red-500 transition-colors"
+            className=" text-xl md:text-2xl lg:text-3xl font-bold tracking-tight font-serif text-gray-900 hover:text-red-500 transition-colors"
           >
             BLOGIFY SPACE
           </Link>
@@ -57,9 +59,9 @@ const Navbar = () => {
             </Link>
             <Link
               to="/trending"
-              className={`text-sm md:text-base lg:text-lg font-medium transition-colors ${
+              className={`text-sm md:text-base lg:text-lg font-medium transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-red-500 after:transition-all hover:after:w-full ${
                 isActive("/trending")
-                  ? "text-gray-900"
+                  ? "text-gray-900 after:w-full"
                   : "text-gray-500 hover:text-gray-900"
               }`}
             >
@@ -67,9 +69,9 @@ const Navbar = () => {
             </Link>
             <Link
               to="/latest"
-              className={`text-sm md:text-base lg:text-lg font-medium transition-colors ${
+              className={`text-sm md:text-base lg:text-lg font-medium transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-red-500 after:transition-all hover:after:w-full ${
                 isActive("/latest")
-                  ? "text-gray-900"
+                  ? "text-gray-900 after:w-full"
                   : "text-gray-500 hover:text-gray-900"
               }`}
             >
@@ -77,9 +79,9 @@ const Navbar = () => {
             </Link>
             <Link
               to="/categories"
-              className={`text-sm md:text-base lg:text-lg font-medium transition-colors ${
+              className={`text-sm md:text-base lg:text-lg font-medium transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-red-500 after:transition-all hover:after:w-full ${
                 isActive("/categories")
-                  ? "text-gray-900"
+                  ? "text-gray-900 after:w-full"
                   : "text-gray-500 hover:text-gray-900"
               }`}
             >
@@ -89,7 +91,7 @@ const Navbar = () => {
         </div>
 
         {/* Right Side */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center md:gap-4 gap-1">
           {/* Search Button */}
           <button
             onClick={() => setSearchOpen(!searchOpen)}
@@ -98,14 +100,21 @@ const Navbar = () => {
           >
             <Search className="h-5 w-5" />
           </button>
+          <button
+            className="p-3 rounded-full hover:bg-red-500 hover:text-white transition-colors duration-700"
+            aria-label="Search"
+          >
+            <FaRegCircleUser className="h-5 w-5" />
+          </button>
 
           {/* Auth Buttons (Desktop) */}
           {isAuth ? (
             <div className="hidden lg:flex items-center gap-3">
               <button
                 onClick={() => setShowCreatePost(true)}
-                className="px-4 py-2 text-sm md:text-base rounded-md hover:bg-red-500 hover:text-white transition-colors duration-700"
+                className="flex items-center gap-1 px-4 py-2 text-sm md:text-base rounded-md hover:bg-red-500 hover:text-white transition-colors duration-700 border-[1px] border-gray-300"
               >
+                <MdAdd />
                 Add Post
               </button>
               <button

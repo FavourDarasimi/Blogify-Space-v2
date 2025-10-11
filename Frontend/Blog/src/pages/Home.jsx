@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Header from "../components/Header";
 import Blogs from "../components/Blogs";
 
@@ -7,7 +7,7 @@ const Home = () => {
     <div>
       <Header />
       <main className="container py-16 md:py-20 space-y-20 ">
-        <Blogs />
+        <Blogs data-aos="zoom-in" />
       </main>
     </div>
   );

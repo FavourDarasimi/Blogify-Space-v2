@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-
+import { BeatLoader } from "react-spinners";
+import { motion, AnimatePresence } from "framer-motion";
 import CategoryFilter from "../components/CategoryFilter";
 import BlogCard from "../components/BlogCard";
 import { Clock, ArrowLeft } from "lucide-react";
@@ -8,6 +9,7 @@ import { getlatestPost } from "../endpoint/api";
 const Latest = () => {
   const [activeCategory, setActiveCategory] = useState("Discover");
   const [posts, setPost] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const getTrendingPost = async () => {
@@ -21,6 +23,8 @@ const Latest = () => {
         setPost(filteredPosts);
       } catch (error) {
         console.log(error);
+      } finally {
+        setLoading(false);
       }
     };
     getTrendingPost();
@@ -28,8 +32,8 @@ const Latest = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
-      <section className="w-full py-16 md:py-24 relative overflow-hidden border-b">
-        <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-indigo-50"></div>
+      <section className="w-full py-12 md:py-20 relative overflow-hidden border-b">
+        <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-pink-50"></div>
 
         <div className="container px-4 md:px-6 relative">
           <div className="flex items-center gap-3 mb-6">
@@ -66,18 +70,31 @@ const Latest = () => {
         </div>
 
         {/* Posts Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {posts.map((post) => (
-            <BlogCard post={post} />
-          ))}
-        </div>
-
-        {posts.length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-lg text-gray-600">
-              No articles found in this category
-            </p>
+        {loading ? (
+          <div className="text-center">
+            <BeatLoader color="#dc2626" />
           </div>
+        ) : (
+          <AnimatePresence>
+            <motion.ul
+              className="space-y-3"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {posts.length === 0 ? (
+                  <div className="text-center py-20">
+                    <p className="text-lg text-gray-600">
+                      No articles found in this category
+                    </p>
+                  </div>
+                ) : (
+                  posts.map((post) => <BlogCard post={post} />)
+                )}
+              </div>{" "}
+            </motion.ul>
+          </AnimatePresence>
         )}
       </main>
     </div>

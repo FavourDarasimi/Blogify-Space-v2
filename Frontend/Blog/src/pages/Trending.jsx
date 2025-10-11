@@ -3,10 +3,13 @@ import CategoryFilter from "../components/CategoryFilter";
 import BlogCard from "../components/BlogCard";
 import { TrendingUp } from "lucide-react";
 import { getTopPost } from "../endpoint/api";
+import { BeatLoader } from "react-spinners";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Trending = () => {
   const [activeCategory, setActiveCategory] = useState("Discover");
   const [posts, setPost] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const getTrendingPost = async () => {
@@ -20,6 +23,8 @@ const Trending = () => {
         setPost(filteredPosts);
       } catch (error) {
         console.log(error);
+      } finally {
+        setLoading(false);
       }
     };
     getTrendingPost();
@@ -27,7 +32,7 @@ const Trending = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
-      <section className="w-full py-16 md:py-24 relative overflow-hidden border-b">
+      <section className="w-full py-12 md:py-20 relative overflow-hidden border-b">
         <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-pink-50"></div>
 
         <div className="container px-4 md:px-6 relative">
@@ -64,12 +69,24 @@ const Trending = () => {
           />
         </div>
 
-        {/* Posts Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {posts.map((post, idx) => (
-            <BlogCard key={post.id ?? idx} post={post} />
-          ))}
-        </div>
+        {loading ? (
+          <BeatLoader color="#dc2626" />
+        ) : (
+          <AnimatePresence>
+            <motion.ul
+              className="space-y-3"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {posts.map((post, idx) => (
+                  <BlogCard key={post.id ?? idx} post={post} />
+                ))}
+              </div>
+            </motion.ul>
+          </AnimatePresence>
+        )}
 
         {posts.length === 0 && (
           <div className="text-center py-20">

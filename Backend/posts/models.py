@@ -5,7 +5,8 @@ import math
 User = settings.AUTH_USER_MODEL
 
 class Category(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=50)
+    description = models.TextField(max_length=100)
 
     def __str__(self) :
         return self.name
@@ -14,7 +15,7 @@ class Post(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE,blank=True,null=True)
     title = models.CharField(max_length=100)
     category = models.ForeignKey(Category, on_delete=models.CASCADE,null=True)
-    body = models.TextField(max_length=1000)
+    body = models.TextField(max_length=10000)
     image = models.ImageField(blank=True,null=True,upload_to='images/')
     likes = models.ManyToManyField(User, related_name='likes', blank=True)
     saved = models.ManyToManyField(User, related_name='saved', blank=True)

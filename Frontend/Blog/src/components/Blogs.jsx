@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import BlogList from "./BlogList";
 import BlogCard from "./BlogCard";
-import Categories from "./Categories";
 import { getTopPost, getlatestPost, getAllPost } from "../endpoint/api";
 import { IoMenuOutline } from "react-icons/io5";
 import cancel from "../assets/icons8-cross-24.png";
@@ -21,17 +20,23 @@ const Blogs = () => {
       try {
         const posts = await getTopPost();
         const all = await getAllPost();
+        const post = await getlatestPost();
+
         const [feature, ...others] = all.data.slice(0, 5);
         setFeatured(feature);
         setOther(others);
-        const newPosts = posts.data.filter(
+
+        const filteredTrendingPosts = posts.data.filter(
           (post) =>
             post.id !== feature.id &&
             !other.some((otherPost) => otherPost.id === post.id)
         );
-        console.log(newPosts);
-        setTrendingPosts(newPosts.slice(0, 5));
-        console.log(`top posts: ${JSON.stringify(trendingPosts)}`);
+        setTrendingPosts(filteredTrendingPosts.slice(0, 5));
+
+        const filteredLatestPosts = post.data.filter(
+          (post) => post.id !== feature.id
+        );
+        setLatestPosts(filteredLatestPosts);
       } catch (error) {
         console.log(error);
       }
@@ -41,12 +46,13 @@ const Blogs = () => {
     const fetchlatestPosts = async () => {
       try {
         const post = await getlatestPost();
-        setLatestPosts(post.data);
+        const newPost = post.data.filter((post) => post.id !== featured.id);
+        console.log(newPost);
+        setLatestPosts(newPost);
       } catch (error) {
         console.log(error);
       }
     };
-    fetchlatestPosts();
   }, []);
 
   return (
@@ -63,51 +69,15 @@ const Blogs = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {/* Featured post */}
-          {featured && <BlogCard post={featured} />}
+          {featured && <BlogCard post={featured} featuredPage={true} />}
 
           {/* Other posts */}
-          {other && other.map((post) => <BlogCard key={post.id} post={post} />)}
+          {other &&
+            other.map((post) => (
+              <BlogCard key={post.id} post={post} featuredPage={false} />
+            ))}
         </div>
       </section>
-      {/* 
-      <div className="lg:flex md:flex items-center w-full">
-        <div className="sm:flex sm:gap-x-20 sm:justify-between sm:items-center">
-          <div className="flex items-center">
-            <p className="text-xl md:text-2xl lg:text-3xl font-bold text-red-700 pr-4">
-              BLOGIFY SPACE
-            </p>
-
-            <p className="text-sm border-1 bg-red-600 text-white p-2 rounded-lg">
-              Discover
-            </p>
-          </div>
-          <IoMenuOutline
-            onClick={() => setShow(true)}
-            className="lg:hidden md:hidden sm:flex sm:w-7 sm:h-7"
-          />
-        </div>
-
-        <div
-          className={`lg:flex md:flex gap-x-10  ${
-            show
-              ? "sm:flex sm:flex-col  sm:p-3 sm:rounded-md sm:z-1  sm:absolute sm:w-90%   sm:h-fit sm:bg-dark-white sm:text-black"
-              : "sm:hidden"
-          }`}
-        >
-          <div className="flex justify-end">
-            {show ? (
-              <img
-                src={cancel}
-                onClick={() => setShow(false)}
-                className="w-7 h-7 "
-              />
-            ) : (
-              ""
-            )}
-          </div>
-          <Categories show={show} setShow={setShow} />
-        </div>
-      </div> */}
 
       <div className="mb-16">
         <div className="flex items-center justify-between mb-8">
@@ -124,7 +94,7 @@ const Blogs = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4  gap-6">
           {trendingPosts.map((post) => (
-            <BlogCard key={post.id} post={post} />
+            <BlogCard key={post.id} post={post} featuredPage={false} />
           ))}
         </div>
       </div>
@@ -144,7 +114,7 @@ const Blogs = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4   gap-6">
           {latestPosts.map((post) => (
-            <BlogCard key={post.id} post={post} />
+            <BlogCard key={post.id} post={post} featured={false} />
           ))}
         </div>
       </div>
