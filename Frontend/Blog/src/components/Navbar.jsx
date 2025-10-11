@@ -110,13 +110,12 @@ const Navbar = () => {
           {/* Auth Buttons (Desktop) */}
           {isAuth ? (
             <div className="hidden lg:flex items-center gap-3">
-              <button
-                onClick={() => setShowCreatePost(true)}
-                className="flex items-center gap-1 px-4 py-2 text-sm md:text-base rounded-md hover:bg-red-500 hover:text-white transition-colors duration-700 border-[1px] border-gray-300"
-              >
-                <MdAdd />
-                Add Post
-              </button>
+              <Link to="/add/post">
+                <button className="flex items-center gap-1 px-4 py-2 text-sm md:text-base rounded-md hover:bg-red-500 hover:text-white transition-colors duration-700 border-[1px] border-gray-300">
+                  <MdAdd />
+                  Add Post
+                </button>
+              </Link>
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 text-sm md:text-base bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-700"

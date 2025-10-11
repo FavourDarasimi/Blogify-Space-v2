@@ -1,15 +1,17 @@
 import React from "react";
 import { TrendingUp, Clock } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const BlogCard = ({ featuredPage, post }) => {
   if (post.featured) {
     return (
-      <Link key={post.id} to={`/detail/${post.id}`}>
-        <div
-          className={`group relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-xl ${
-            featuredPage ? "md:col-span-2 md:row-span-2" : ""
-          }`}
-        >
+      <div
+        className={`group relative overflow-hidden rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-xl ${
+          featuredPage ? "md:col-span-2 md:row-span-2" : ""
+        }`}
+      >
+        {" "}
+        <Link key={post.id} to={`/detail/${post.id}`}>
           <div
             className={`aspect-[3/2] ${
               featuredPage ? "md:aspect-[21/9]" : "md:aspect-[4/3]"
@@ -24,7 +26,7 @@ const BlogCard = ({ featuredPage, post }) => {
 
           <div
             className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end ${
-              featuredPage ? "p-6 md:p-10" : "md:p-6 p-3"
+              featuredPage ? "p-6 md:p-8 lg:p-10" : "lg:p-6 md:p-4 p-2"
             }`}
           >
             <div className="flex items-center gap-3 mb-4">
@@ -41,13 +43,13 @@ const BlogCard = ({ featuredPage, post }) => {
 
             <div className="text-white space-y-3">
               <h3
-                className={`${
-                  featuredPage ? "text-xl md:text-4xl" : "text-xl"
+                className={`line-clamp-2 ${
+                  featuredPage ? "text-xl md:text-3xl lg:text-4xl" : "text-xl"
                 }  font-bold leading-tight font-serif`}
               >
                 {post.title}
               </h3>
-              <div className="flex items-center gap-4 text-sm text-white/80">
+              <div className="flex items-center lg:gap-4  gap-1 text-sm text-white/80">
                 <span className="font-medium">
                   {post && post.user.username}
                 </span>
@@ -60,8 +62,9 @@ const BlogCard = ({ featuredPage, post }) => {
               </div>
             </div>
           </div>
-        </div>
-      </Link>
+        </Link>
+      </div>
+      //
       // {/* </div> */}
     );
   }
@@ -76,16 +79,16 @@ const BlogCard = ({ featuredPage, post }) => {
           />
         </div>
 
-        <div className="absolute inset-0 flex flex-col justify-end md:p-6 p-2 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
+        <div className="absolute inset-0 flex flex-col justify-end lg:p-6 md:p-4 p-2 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
           <span className="inline-block mb-3 px-3 py-1 text-xs font-medium w-fit text-white bg-red-500 rounded-md shadow-md">
             {post.category}
           </span>
 
           <div className="text-white space-y-2">
-            <h3 className="text-xl font-bold leading-snug font-serif group-hover:text-white/90 transition-colors">
+            <h3 className="line-clamp-2  text-xl font-bold leading-snug font-serif group-hover:text-white/90 transition-colors">
               {post.title}
             </h3>
-            <div className="flex items-center gap-3 text-xs text-white/70">
+            <div className="flex items-center lg:gap-3  gap-1 text-xs text-white/70">
               <span className="font-medium">{post && post.user.username}</span>
               <span>•</span>
               <span className="flex items-center gap-1">

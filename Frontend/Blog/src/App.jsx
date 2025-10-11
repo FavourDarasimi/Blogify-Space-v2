@@ -16,6 +16,7 @@ import Footer from "./components/Footer";
 import Latest from "./pages/Latest";
 import Categories from "./pages/Categories";
 import CategoryPosts from "./pages/CategoryPosts";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   const [setShowLogin] = useState(false);
@@ -23,7 +24,7 @@ function App() {
 
   return (
     <div className="bg-white flex flex-col min-h-screen text-textcol2 relative">
-      {showCreatePost ? <CreateBlog /> : ""}
+      <ScrollToTop />
       <Navbar setShowLogin={setShowLogin} />
       <div className="flex-grow">
         <Routes>
@@ -37,6 +38,7 @@ function App() {
           <Route path="/categories" element={<Categories />} />
           <Route path="/category/:categoryId" element={<CategoryPosts />} />
           <Route path="/detail/:postId" element={<BlogDetail />} />
+          <Route path="/add/post" element={<CreateBlog />} />
           <Route path="/profile/" element={<Profile />} />
           <Route path="/saved/post/" element={<SavedPost />} />
         </Routes>

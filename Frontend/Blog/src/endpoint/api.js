@@ -1,7 +1,5 @@
 import axios from "axios";
 
-// import axios from "axios";
-
 const api = axios.create({
   baseURL: "http://localhost:8000", // or your API URL
 });
@@ -11,6 +9,7 @@ api.interceptors.request.use(
   async (config) => {
     const token = localStorage.getItem("token");
     if (token) {
+      config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -24,19 +23,18 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Handle refresh only once
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest?._retry) {
       originalRequest._retry = true;
 
       const refresh = localStorage.getItem("refresh");
       if (!refresh) {
-        // No refresh token — redirect to login
         localStorage.removeItem("token");
         window.location.href = "/login";
         return Promise.reject(error);
       }
 
       try {
+        // Use plain axios here to avoid re-triggering the same interceptor loop.
         const { data } = await axios.post(
           "http://localhost:8000/account/token/refresh/",
           { refresh }
@@ -44,12 +42,13 @@ api.interceptors.response.use(
 
         if (data.access) {
           localStorage.setItem("token", data.access);
+          api.defaults.headers = api.defaults.headers || {};
           api.defaults.headers.Authorization = `Bearer ${data.access}`;
+          originalRequest.headers = originalRequest.headers || {};
           originalRequest.headers.Authorization = `Bearer ${data.access}`;
           return api(originalRequest); // retry with new token
         }
       } catch (refreshError) {
-        // Refresh failed — clear and redirect
         localStorage.removeItem("token");
         localStorage.removeItem("refresh");
         window.location.href = "/login";
@@ -63,69 +62,60 @@ api.interceptors.response.use(
 
 export default api;
 
+/* Helper to normalize error throwing */
+const throwErr = (error) => {
+  throw error?.response?.data ?? error;
+};
+
+/* ---- API calls: use `api` instance (so interceptors apply) ---- */
+
 export const getCategories = async () => {
   try {
-    const response = await axios.get("http://127.0.0.1:8000/blog/categories");
+    const response = await api.get("/blog/categories");
     return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const getCategoryPost = async (id) => {
   try {
-    const response = await axios.get(
-      `http://127.0.0.1:8000/blog/category/${id}/post`
-    );
+    const response = await api.get(`/blog/category/${id}/post`);
     return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const addPost = async (category, title, body, image) => {
-  const token = localStorage.getItem("token");
   try {
-    const response = await axios.post(
-      "http://127.0.0.1:8000/blog/post/create",
-      {
-        category: category,
-        title: title,
-        body: body,
-        image: image,
-      },
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response;
+    const form = new FormData();
+    form.append("category", category);
+    form.append("title", title);
+    form.append("body", body);
+    if (image) form.append("image", image);
+
+    const response = await api.post("/blog/post/create", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const getPostDetail = async (id) => {
-  const token = localStorage.getItem("token");
   try {
-    const response = await axios.get(
-      `http://127.0.0.1:8000/blog/post/${id}`,
-
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    const response = await api.get(`/blog/post/${id}`);
     return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const login = async (email, password) => {
   try {
-    const response = await axios.post("http://127.0.0.1:8000/account/login/", {
+    const response = await axios.post("http://localhost:8000/account/login/", {
       username: email,
       password: password,
     });
@@ -133,150 +123,122 @@ export const login = async (email, password) => {
       localStorage.setItem("token", response.data.access);
       localStorage.setItem("refresh", response.data.refresh);
     }
-    return response;
+    return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const logout = async () => {
   try {
-    const token = localStorage.getItem("token");
-    const response = await axios.post("http://localhost:8000/account/logout/", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await api.post("/account/logout/");
     localStorage.removeItem("token");
+    localStorage.removeItem("refresh");
+    return response.data;
   } catch (error) {
-    throw error;
+    throwErr(error);
   }
 };
 
 export const signup = async (username, gender, email, password) => {
   try {
-    const response = await axios.post("http://127.0.0.1:8000/account/signup/", {
-      username: username,
-      gender: gender,
-      email: email,
-      password: password,
+    const response = await api.post("/account/signup/", {
+      username,
+      gender,
+      email,
+      password,
     });
-    return response;
+    return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const getTopPost = async () => {
   try {
-    const response = await axios.get("http://127.0.0.1:8000/blog/top/post");
+    const response = await api.get("/blog/top/post");
     return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
+
 export const getAllPost = async () => {
   try {
-    const response = await axios.get("http://127.0.0.1:8000/blog/post");
+    const response = await api.get("/blog/post");
     return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const getlatestPost = async () => {
   try {
-    const response = await axios.get("http://127.0.0.1:8000/blog/latest/post");
+    const response = await api.get("/blog/latest/post");
     return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const addComment = async (comment, post) => {
   try {
-    const token = localStorage.getItem("token");
-    const response = await axios.post(
-      `http://127.0.0.1:8000/blog/comment/create/${post}`,
-      { comment: comment },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    return response;
+    const response = await api.post(`/blog/comment/create/${post}`, {
+      comment,
+    });
+    return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const getComments = async (id) => {
   try {
-    const response = await axios.get(
-      `http://127.0.0.1:8000/blog/comments/${id}`
-    );
+    const response = await api.get(`/blog/comments/${id}`);
     return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const likePost = async (id) => {
   try {
-    const token = localStorage.getItem("token");
-    const response = await axios.put(
-      `http://127.0.0.1:8000/blog/likepost/${id}`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    return response;
+    const response = await api.put(`/blog/likepost/${id}`, {});
+    return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const getUser = async () => {
-  const token = localStorage.getItem("token");
   try {
-    const response = await axios.post(
-      "http://127.0.0.1:8000/account/get_user/",
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    const response = await api.get("/account/get_user/");
     return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const createProfile = async (phoneNumber, location, bio, image) => {
-  const token = localStorage.getItem("token");
   try {
-    const response = await axios.post(
-      "http://127.0.0.1:8000/account/profile/create",
-      { phone_number: phoneNumber, location: location, bio: bio, image: image },
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response;
+    const form = new FormData();
+    form.append("phone_number", phoneNumber);
+    form.append("location", location);
+    form.append("bio", bio);
+    if (image) form.append("image", image);
+
+    const response = await api.post("/account/profile/create", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const getProfile = async () => {
-  const token = localStorage.getItem("token");
   try {
-    const response = await axios.get(
-      "http://127.0.0.1:8000/account/profile",
-
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    const response = await api.get("/account/profile");
     return response.data;
   } catch (error) {
     return false;
@@ -285,77 +247,49 @@ export const getProfile = async () => {
 
 export const editProfile = async (updatedProfile) => {
   try {
-    const token = localStorage.getItem("token");
-    const response = await axios.put(
-      "http://127.0.0.1:8000/account/profile/edit",
-      updatedProfile,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response;
+    const response = await api.put("/account/profile/edit", updatedProfile, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const editPost = async (id, updatedPost) => {
   try {
-    const token = localStorage.getItem("token");
-    const response = await axios.put(
-      `http://127.0.0.1:8000/blog/post/edit/${id}`,
-      updatedPost,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response;
+    const response = await api.put(`/blog/post/edit/${id}`, updatedPost, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const getRelatedPost = async (id) => {
   try {
-    const response = await axios.get(
-      `http://127.0.0.1:8000/blog/post/related/${id}`
-    );
+    const response = await api.get(`/blog/post/related/${id}`);
     return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };
 
 export const savePost = async (id) => {
-  const token = localStorage.getItem("token");
   try {
-    const response = await axios.put(
-      `http://127.0.0.1:8000/blog/savepost/${id}`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    return response;
+    const response = await api.put(`/blog/savepost/${id}`, {});
+    return response.data;
   } catch (error) {
     return false;
   }
 };
 
 export const getSavedPost = async () => {
-  const token = localStorage.getItem("token");
   try {
-    const response = await axios.get("http://127.0.0.1:8000/blog/saved/post", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await api.get("/blog/saved/post");
     return response.data;
   } catch (error) {
-    throw error.response.data;
+    throwErr(error);
   }
 };

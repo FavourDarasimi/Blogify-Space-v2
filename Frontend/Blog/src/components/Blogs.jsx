@@ -67,7 +67,7 @@ const Blogs = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {/* Featured post */}
           {featured && <BlogCard post={featured} featuredPage={true} />}
 
@@ -92,7 +92,7 @@ const Blogs = () => {
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4  gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4  gap-6">
           {trendingPosts.map((post) => (
             <BlogCard key={post.id} post={post} featuredPage={false} />
           ))}
@@ -112,7 +112,7 @@ const Blogs = () => {
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4   gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4   gap-6">
           {latestPosts.map((post) => (
             <BlogCard key={post.id} post={post} featured={false} />
           ))}

@@ -60,7 +60,7 @@ class Is_Authenticated(APIView):
             return Response({"isAuthenticated":False})
     
 class GetUserView(APIView):
-    def post(self,request:Request):
+    def get(self,request:Request):
         serializer = UserSerializer(instance=request.user,context={'request':request})
         return Response(data=serializer.data)
 

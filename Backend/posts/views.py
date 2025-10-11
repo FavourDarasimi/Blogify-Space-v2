@@ -39,10 +39,10 @@ class DetailPostView(APIView):
         post =Post.objects.get(pk=pk)
         serializer = PostSerializer(post,context={'request':request})
         response = {
-            'Post':serializer.data
+            'data':serializer.data
 
         }
-        return Response(data=serializer.data, status=status.HTTP_200_OK) 
+        return Response(data=response, status=status.HTTP_200_OK) 
 
 class EditPost(APIView):
     def put(self, request:Request,pk) :
@@ -172,9 +172,19 @@ class LatestPostView(APIView):
 class RelatedPostsView(APIView):
     def get(self, request:Request,pk):
         post=Post.objects.get(pk=pk)
-        related_post = Post.objects.filter(category=post.category).distinct().order_by('?')[:5]
+        posts = Post.objects.filter(category=post.category).distinct().order_by('?')
+        related_post = []
+        for blog_post in posts:
+            if post.id == blog_post.id:
+                pass
+            else:
+                related_post.append(blog_post )
         serializer = PostSerializer(related_post,many=True,context={"request":request}) 
-        return Response(data=serializer.data,status=status.HTTP_200_OK)  
+        response = {
+            'message':'Related Post',
+            'data':serializer.data
+        }
+        return Response(data=response,status=status.HTTP_200_OK)  
     
 
 class SavePostView(APIView):
