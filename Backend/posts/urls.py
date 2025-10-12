@@ -5,10 +5,12 @@ from . import views
 
 urlpatterns = [
     path('post/create',views.CreatePostView.as_view(),name='create_post'),
-    path('post',views.PostView.as_view(),name='posts'),
+    path('post',views.ListPostView.as_view(),name='posts'),
     path('post/edit/<int:pk>',views.EditPost.as_view(),name='edit_post'),
-    path('top/post',views.TopPostView.as_view(),name='top_posts'),
-    path('latest/post',views.LatestPostView.as_view(),name='latest_posts'),
+    path('top/posts',views.TopPostView.as_view(),name='top_posts'),
+    path('trending/posts/',views.TrendingPostView.as_view(),name='trending_posts'),
+    path('featured/posts',views.FeaturedPostView.as_view(),name='featured_posts'),
+    path('latest/posts',views.LatestPostView.as_view(),name='latest_posts'),
     path('category/create/',views.CreateCategoryView.as_view(),name='posts'),
     path('post/<int:pk>',views.DetailPostView.as_view(),name='detail_post'),
     path('post/related/<int:pk>',views.RelatedPostsView.as_view(),name='related_post'),

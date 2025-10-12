@@ -83,6 +83,32 @@ export default function CreateBlog() {
     }
   };
 
+  const quillModules = {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ["bold", "italic", "underline", "strike"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      [{ align: [] }],
+      ["blockquote", "code-block"],
+      ["link"],
+      ["clean"],
+    ],
+  };
+
+  const quillFormats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "list",
+    "bullet",
+    "align",
+    "blockquote",
+    "code-block",
+    "link",
+  ];
+
   return (
     <div className="mt-5 flex items-center justify-center  p-4">
       <form
@@ -141,21 +167,17 @@ export default function CreateBlog() {
         <div className="flex flex-col mb-6">
           <label className="font-semibold mb-1">Content</label>
           <ReactQuill
+            theme="snow"
             value={body}
             onChange={setBody}
+            modules={quillModules}
+            formats={quillFormats}
             placeholder="Write your story..."
-            className="rounded-xl bg-white"
-            theme="snow"
-            modules={{
-              toolbar: [
-                [{ header: [1, 2, 3, false] }],
-                ["bold", "italic", "underline", "blockquote"],
-                [{ list: "ordered" }, { list: "bullet" }],
-                ["link", "image"],
-                ["clean"],
-              ],
-            }}
+            className="bg-background"
           />
+          <p className="text-xs text-muted-foreground text-right pt-2">
+            {body.replace(/<[^>]*>/g, "").length}/10000 characters
+          </p>
         </div>
 
         {/* Image Upload */}

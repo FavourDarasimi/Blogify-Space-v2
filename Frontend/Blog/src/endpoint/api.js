@@ -154,9 +154,19 @@ export const signup = async (username, gender, email, password) => {
   }
 };
 
-export const getTopPost = async () => {
+export const getTopPost = async (timeframe) => {
   try {
-    const response = await api.get("/blog/top/post");
+    const response = await api.get(
+      `/blog/trending/posts/?timeframe=${timeframe}`
+    );
+    return response.data;
+  } catch (error) {
+    throwErr(error);
+  }
+};
+export const getFeaturedPost = async () => {
+  try {
+    const response = await api.get("/blog/featured/posts");
     return response.data;
   } catch (error) {
     throwErr(error);
@@ -174,7 +184,7 @@ export const getAllPost = async () => {
 
 export const getlatestPost = async () => {
   try {
-    const response = await api.get("/blog/latest/post");
+    const response = await api.get("/blog/latest/posts");
     return response.data;
   } catch (error) {
     throwErr(error);

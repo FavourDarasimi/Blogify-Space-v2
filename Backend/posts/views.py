@@ -1,13 +1,18 @@
+from django.db import IntegrityError
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Count
 from rest_framework.permissions import IsAuthenticated
-from .models import Post,Category,Comment,SavedPost
+from .models import Post,Category,Comment,SavedPost,PostView
 from .serializers import PostSerializer,CategorySerializer,CommentSerializer,SavedPostSerializer
 from rest_framework.parsers import MultiPartParser,FormParser
-
+from django.db.models import F
+from django.db.models import Count, F, FloatField, ExpressionWrapper
+from django.utils.timezone import now, timedelta
+from .utils import dynamic_trending_threshold,get_time_window
+from django.db.models.functions import Now, ExtractDay, ExtractHour
 
 
 class CreatePostView(APIView):
@@ -25,7 +30,7 @@ class CreatePostView(APIView):
             return Response(data=response,status=status.HTTP_201_CREATED)
         return Response(data={'error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
-class PostView(APIView):
+class ListPostView(APIView):
     def get(self,request:Request):
         post =Post.objects.all()
         serializer = PostSerializer(post,many=True,context={'request':request})
@@ -37,12 +42,32 @@ class PostView(APIView):
 class DetailPostView(APIView):
     def get(self, request:Request,pk):
         post =Post.objects.get(pk=pk)
+        if request.user.is_authenticated:
+            user = request.user
+            ip = None
+        else:
+            user = None
+            ip = self.get_client_ip(request)
+
+        # Try to register a new view
+        try:
+            
+            PostView.objects.create(post=post, user=user, ip_address=ip)
+            Post.objects.filter(pk=post.pk).update(views=F("views") + 1)
+        except IntegrityError:
+            pass  # already viewed — d
+
         serializer = PostSerializer(post,context={'request':request})
         response = {
             'data':serializer.data
 
         }
         return Response(data=response, status=status.HTTP_200_OK) 
+    def get_client_ip(self, request):
+        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+        if x_forwarded_for:
+            return x_forwarded_for.split(",")[0]
+        return request.META.get("REMOTE_ADDR")
 
 class EditPost(APIView):
     def put(self, request:Request,pk) :
@@ -147,6 +172,15 @@ class LikePostView(APIView):
             
         return Response(data={'error':serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
+class FeaturedPostView(APIView):
+    def get(self,request:Request):
+        featured_post = Post.objects.filter(featured=True)
+        seializer = PostSerializer(featured_post,many=True,context={'request':request})
+        response = {
+            'message':'Featured Post',
+            'data':seializer.data
+        }
+        return Response(data=response,status=status.HTTP_200_OK)
 
 class TopPostView(APIView):
     def get(self,request:Request):
@@ -159,13 +193,60 @@ class TopPostView(APIView):
         return Response(data=response,status=status.HTTP_200_OK)
 
 
+
+class TrendingPostView(APIView):
+    def get(self, request):
+        timeframe = request.query_params.get("timeframe", "weekly").lower()
+        time_window = get_time_window(timeframe)
+
+        # Step 1: Annotate engagement metrics
+        posts = (
+            Post.objects.annotate(
+                like_count=Count("likes", distinct=True),
+                save_count=Count("saved", distinct=True),
+                comment_count=Count("comments", distinct=True),
+            )
+            .filter(date_added__gte=time_window)
+        )
+
+        # Step 2: Compute trending score in Python
+        for post in posts:
+            age_in_days = max((now() - post.date_added).days, 1)
+            trending_score = (
+                (post.views * 1)
+                + (post.likes.count() * 3)
+                + (post.comments.count() * 4)
+                + (post.saved.count() * 5)
+            ) / age_in_days
+            post.trending_score = trending_score
+
+        # Step 3: Calculate threshold dynamically from posts
+        threshold = dynamic_trending_threshold(posts)
+
+        # Step 4: Filter and order
+        trending_posts = [p for p in posts if p.trending_score >= threshold]
+        trending_posts.sort(key=lambda p: p.trending_score, reverse=True)
+
+        serializer = PostSerializer(trending_posts, many=True, context={"request": request})
+
+        return Response(
+            {
+                "timeframe": timeframe,
+                "threshold": threshold,
+                "count": len(serializer.data),
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )
+    
+
 class LatestPostView(APIView):
     def get(self, request:Request):
         latest_post = Post.objects.order_by('-date_added')[:8]
-        seializer = PostSerializer(latest_post,many=True,context={'request':request})
+        serializer = PostSerializer(latest_post,many=True,context={'request':request})
         response = {
             'message':'Latest Post',
-            'data':seializer.data
+            'data':serializer.data
         }
         return Response(data=response,status=status.HTTP_200_OK)   
 

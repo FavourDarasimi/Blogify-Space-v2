@@ -17,9 +17,10 @@ class Post(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE,null=True)
     body = models.TextField(max_length=10000)
     image = models.ImageField(blank=True,null=True,upload_to='images/')
+    views  =models.PositiveIntegerField(default=0,blank=True,null=True)
     likes = models.ManyToManyField(User, related_name='likes', blank=True)
     saved = models.ManyToManyField(User, related_name='saved', blank=True)
-    top = models.BooleanField(default=False,blank=True,null=True)
+    trending = models.BooleanField(default=False,blank=True,null=True)
     featured = models.BooleanField(default=False,blank=True,null=True)
     date_added = models.DateTimeField(auto_now_add=True,blank=True,null=True)
     def __str__(self)  :
@@ -52,6 +53,25 @@ class Post(models.Model):
             years = math.floor(diff.days/365)
             return f'{years} years ago'
 
+class PostView(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="post_views")
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["post", "user"],
+                name="unique_user_post_view",
+                condition=~models.Q(user=None),
+            ),
+            models.UniqueConstraint(
+                fields=["post", "ip_address"],
+                name="unique_ip_post_view",
+                condition=models.Q(user=None),
+            ),
+        ]
 
 class Comment(models.Model):
     user = models.ForeignKey(User,on_delete=models.CASCADE,blank=True)

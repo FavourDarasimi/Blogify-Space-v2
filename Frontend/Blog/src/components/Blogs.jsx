@@ -2,7 +2,12 @@
 import React, { useEffect, useState } from "react";
 import BlogList from "./BlogList";
 import BlogCard from "./BlogCard";
-import { getTopPost, getlatestPost, getAllPost } from "../endpoint/api";
+import {
+  getTopPost,
+  getlatestPost,
+  getAllPost,
+  getFeaturedPost,
+} from "../endpoint/api";
 import { IoMenuOutline } from "react-icons/io5";
 import cancel from "../assets/icons8-cross-24.png";
 import { ArrowRight } from "lucide-react";
@@ -12,29 +17,33 @@ const Blogs = () => {
   const [trendingPosts, setTrendingPosts] = useState([]);
   const [allPosts, setAllPosts] = useState([]);
   const [latestPosts, setLatestPosts] = useState([]);
-  const [show, setShow] = useState(false);
-  const [featured, setFeatured] = useState();
-  const [other, setOther] = useState([]);
+  const [timeframe, setTimeframe] = useState("weekly");
+  // const [featured, setFeatured] = useState();
+  // const [other, setOther] = useState([]);
+  const [featuredPosts, setFeaturedPosts] = useState([]);
+  const [index, setIndex] = useState(0);
   useEffect(() => {
     const fetchTrendingPosts = async () => {
       try {
-        const posts = await getTopPost();
-        const all = await getAllPost();
-        const post = await getlatestPost();
+        const trending_posts = await getTopPost(timeframe);
+        const latest_posts = await getlatestPost();
+        const featured_posts = await getFeaturedPost();
+        const posts = featured_posts.data.slice(0, 5);
+        setFeaturedPosts(posts);
 
-        const [feature, ...others] = all.data.slice(0, 5);
-        setFeatured(feature);
-        setOther(others);
+        // Load saved index from localStorage (if available)
+        const savedIndex = parseInt(localStorage.getItem("featuredIndex"), 10);
+        if (!isNaN(savedIndex) && savedIndex < posts.length) {
+          setIndex(savedIndex);
+        }
 
-        const filteredTrendingPosts = posts.data.filter(
-          (post) =>
-            post.id !== feature.id &&
-            !other.some((otherPost) => otherPost.id === post.id)
+        const filteredTrendingPosts = trending_posts.data.filter(
+          (post) => !posts.some((otherPost) => otherPost.id === post.id)
         );
         setTrendingPosts(filteredTrendingPosts.slice(0, 5));
 
-        const filteredLatestPosts = post.data.filter(
-          (post) => post.id !== feature.id
+        const filteredLatestPosts = latest_posts.data.filter(
+          (post) => !posts.some((otherPost) => otherPost.id === post.id)
         );
         setLatestPosts(filteredLatestPosts);
       } catch (error) {
@@ -53,7 +62,27 @@ const Blogs = () => {
         console.log(error);
       }
     };
+    fetchlatestPosts();
   }, []);
+
+  useEffect(() => {
+    if (featuredPosts.length === 0) return;
+
+    const interval = setInterval(() => {
+      setIndex((prev) => {
+        const next = (prev + 1) % featuredPosts.length;
+        localStorage.setItem("featuredIndex", next);
+        return next;
+      });
+    }, 60 * 1000); // 5 minutes
+
+    return () => clearInterval(interval);
+  }, [featuredPosts]);
+
+  // Save index on manual change or reload
+
+  const featured = featuredPosts[index];
+  const other = featuredPosts.filter((_, i) => i !== index);
 
   return (
     <div className="rounded-xl gap-y-4">

@@ -19,25 +19,29 @@ import CategoryPosts from "./pages/CategoryPosts";
 import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
-  const [setShowLogin] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const { showCreatePost } = useContext(Context);
 
   return (
     <div className="bg-white flex flex-col min-h-screen text-textcol2 relative">
       <ScrollToTop />
       <Navbar setShowLogin={setShowLogin} />
+      {showLogin ? <AccountAccess setShowLogin={setShowLogin} /> : ""}
       <div className="flex-grow">
         <Routes>
-          <Route
-            path="/login/"
-            element={<AccountAccess setShowLogin={setShowLogin} />}
-          />
+          {/* <Route
+            path="/login"
+            element={}
+          /> */}
           <Route path="/" element={<Home />} />
           <Route path="/trending" element={<Trending />} />
           <Route path="/latest" element={<Latest />} />
           <Route path="/categories" element={<Categories />} />
           <Route path="/category/:categoryId" element={<CategoryPosts />} />
-          <Route path="/detail/:postId" element={<BlogDetail />} />
+          <Route
+            path="/detail/:postId"
+            element={<BlogDetail setShowLogin={setShowLogin} />}
+          />
           <Route path="/add/post" element={<CreateBlog />} />
           <Route path="/profile/" element={<Profile />} />
           <Route path="/saved/post/" element={<SavedPost />} />

@@ -29,8 +29,8 @@ import { CiEdit } from "react-icons/ci";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const BlogDetail = () => {
-  const { showCreatePost } = useContext(Context);
+const BlogDetail = ({ setShowLogin }) => {
+  const { isAuth } = useContext(Context);
   const [showComments, setShowComments] = useState(null);
   const { postId } = useParams();
   const [post, setPost] = useState(null);
@@ -51,7 +51,7 @@ const BlogDetail = () => {
   };
   const fetchRelatedPosts = async () => {
     const relatedPost = await getRelatedPost(postId);
-    setRelatedPosts(relatedPost.data.slice(0, 5) || []);
+    setRelatedPosts(relatedPost.data.slice(0, 3) || []);
   };
 
   useEffect(() => {
@@ -176,7 +176,15 @@ const BlogDetail = () => {
           {/* Post Actions */}
           <div className="flex items-center gap-3 pb-6 border-b mb-8">
             <button
-              onClick={() => handleLike(post)}
+              onClick={() => {
+                if (!isAuth) {
+                  setShowLogin(true);
+                } // block if not log
+                // ged in
+                else {
+                  handleLike(post);
+                }
+              }}
               className={`inline-flex items-center gap-2 px-3 py-1 border rounded-full text-sm font-medium transition ${
                 post.user_liked
                   ? "bg-red-600 text-white border-transparent"
@@ -192,9 +200,13 @@ const BlogDetail = () => {
             </button>
 
             <button
-              onClick={() =>
-                setShowComments((s) => (s === post.id ? null : post.id))
-              }
+              onClick={() => {
+                if (!isAuth) {
+                  setShowLogin(true);
+                } else {
+                  setShowComments((s) => (s === post.id ? null : post.id));
+                }
+              }}
               className="inline-flex items-center gap-2 px-3 py-1 border rounded-full text-sm font-medium bg-white text-gray-800 border-gray-200"
             >
               <MessageCircle className="w-4 h-4 text-gray-700" />
@@ -202,7 +214,13 @@ const BlogDetail = () => {
             </button>
 
             <button
-              onClick={handleShare}
+              onClick={() => {
+                if (!isAuth) {
+                  setShowLogin(true);
+                } else {
+                  handleShare();
+                }
+              }}
               className="inline-flex items-center gap-2 px-3 py-1 border rounded-full text-sm font-medium bg-white text-gray-800 border-gray-200"
             >
               <Share2 className="w-4 h-4 text-gray-700" />
@@ -210,7 +228,13 @@ const BlogDetail = () => {
             </button>
 
             <button
-              onClick={() => handleSavePost(post)}
+              onClick={() => {
+                if (!isAuth) {
+                  setShowLogin(true);
+                } else {
+                  handleSavePost(post);
+                }
+              }}
               className="inline-flex items-center gap-2 px-3 py-1 border rounded-full text-sm font-medium bg-white text-gray-800 border-gray-200 ml-auto"
             >
               {post.user_saved ? (
@@ -241,7 +265,13 @@ const BlogDetail = () => {
             ) : (
               <div className="border-t px-4 py-3 flex justify-end">
                 <button
-                  onClick={() => setShowComments(post.id)}
+                  onClick={() => {
+                    if (!isAuth) {
+                      setShowLogin(true);
+                    } else {
+                      setShowComments(post.id);
+                    }
+                  }}
                   className="flex items-center gap-2 border border-gray-300 text-gray-700 text-sm font-medium px-4 py-2 rounded-md hover:bg-gray-100 transition"
                 >
                   <MessageCircle className="h-4 w-4" />

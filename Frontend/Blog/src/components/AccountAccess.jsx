@@ -21,9 +21,10 @@ const AccountAccess = ({ setShowLogin }) => {
     try {
       const data = await login(email, password);
       setIsAuth(true);
-      if (data.status === 200) {
-        toast.success("User Looged In");
-      }
+      setShowLogin(false);
+
+      toast.success("User Logged In");
+
       nav("/");
     } catch (error) {
       for (var i = 0; i < JSON.stringify(error).length; i++) {
@@ -41,11 +42,11 @@ const AccountAccess = ({ setShowLogin }) => {
       const data = await signup(username, gender, email, password);
       const log = await login(email, password);
       setIsAuth(true);
-      if (data.status === 201) {
-        toast.success("User Signed Up");
-        toast.success("User Looged In");
-      }
-      nav("/profile/");
+      setShowLogin(false);
+      toast.success("User Signed Up");
+      toast.success("User Logged In");
+
+      nav("/");
     } catch (error) {
       for (var i = 0; i < JSON.stringify(error).length; i++) {
         var err = JSON.stringify(Object.values(error)[i])
@@ -64,14 +65,12 @@ const AccountAccess = ({ setShowLogin }) => {
         }}
       >
         <div className="w-full flex justify-end pt-4 pr-4 ">
-          <Link to="/">
-            <img
-              src={cancel}
-              alt=""
-              className="w-6 h-6 cursor-pointer"
-              onClick={() => setShowLogin(false)}
-            />
-          </Link>
+          <img
+            src={cancel}
+            alt=""
+            className="w-6 h-6 cursor-pointer"
+            onClick={() => setShowLogin(false)}
+          />
         </div>
         <div className="flex flex-col gap-3 pl-10 pr-10 pb-10">
           <div className="flex flex-col">
@@ -80,7 +79,9 @@ const AccountAccess = ({ setShowLogin }) => {
             </h1>
             <div className="flex gap-2 text-xsl justify-center">
               <img src={lock} alt="" className="w-6" />
-              <p className="flex items-center text-locktext">All data will be encrypted</p>
+              <p className="flex items-center text-locktext">
+                All data will be encrypted
+              </p>
             </div>
           </div>
           {currentStatus === "signup" ? (

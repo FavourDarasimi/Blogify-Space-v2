@@ -33,7 +33,7 @@ const BlogCard = ({ featuredPage, post }) => {
               <span className="inline-flex items-center rounded-md bg-red-500 px-3 py-1 text-xs font-medium text-white hover:bg-red-600 shadow-lg transition-colors">
                 {post.category}
               </span>
-              {post.top && (
+              {post.trending && (
                 <span className="inline-flex items-center rounded-md bg-white/90 backdrop-blur px-3 py-1 text-xs font-medium text-gray-900">
                   <TrendingUp className="w-3 h-3 mr-1" />
                   Trending

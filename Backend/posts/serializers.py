@@ -26,7 +26,7 @@ class PostSerializer(serializers.ModelSerializer):
     comments_count = serializers.SerializerMethodField()
     class Meta:
         model = Post
-        fields = ['id','user','title','category','body','image','likes','saved','featured','top','user_liked','date_added','time_since_created',"likes_count","comments_count","user_saved"]
+        fields = ['id','user','title','category','body','image','likes','saved','featured','trending','user_liked','date_added','time_since_created',"likes_count","comments_count","user_saved"]
         read_only_fields= ['user','saved']
 
     def get_time_since_created(self,obj):
