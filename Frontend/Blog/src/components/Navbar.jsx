@@ -100,13 +100,15 @@ const Navbar = ({ setShowLogin }) => {
           >
             <Search className="h-5 w-5" />
           </button>
-          <button
-            className={`p-3 rounded-full hover:bg-red-500 hover:text-white transition-colors duration-700 ${
-              isAuth ? "" : "hidden"
-            }`}
-          >
-            <FaRegCircleUser className="h-5 w-5" />
-          </button>
+          <Link to="/profile">
+            <button
+              className={`p-3 rounded-full hover:bg-red-500 hover:text-white transition-colors duration-700 ${
+                isAuth ? "" : "hidden"
+              }`}
+            >
+              <FaRegCircleUser className="h-5 w-5" />
+            </button>
+          </Link>
 
           {/* Auth Buttons (Desktop) */}
           {isAuth ? (

@@ -3,6 +3,7 @@ import { getCategoryPost } from "../endpoint/api";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import BlogCard from "../components/BlogCard";
+import { motion, AnimatePresence } from "framer-motion";
 
 const CategoryPosts = () => {
   const [categoryPosts, setCategoryPosts] = useState();
@@ -58,11 +59,20 @@ const CategoryPosts = () => {
         {/* Posts Grid */}
         <div className="container px-4 md:px-6 py-10">
           {categoryPosts.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
-              {categoryPosts.map((post) => (
-                <BlogCard key={post.id} post={post} />
-              ))}
-            </div>
+            <AnimatePresence>
+              <motion.ul
+                className="space-y-3"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
+                  {categoryPosts.map((post) => (
+                    <BlogCard key={post.id} post={post} />
+                  ))}
+                </div>
+              </motion.ul>
+            </AnimatePresence>
           ) : (
             <div className="text-center py-12">
               <p className="text-xl text-gray-500">

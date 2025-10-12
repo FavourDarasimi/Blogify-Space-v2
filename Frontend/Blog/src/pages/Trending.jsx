@@ -70,7 +70,9 @@ const Trending = () => {
         </div>
 
         {loading ? (
-          <BeatLoader color="#dc2626" />
+          <div className="text-center">
+            <BeatLoader color="#dc2626" />
+          </div>
         ) : (
           <AnimatePresence>
             <motion.ul

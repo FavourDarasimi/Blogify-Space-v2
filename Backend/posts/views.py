@@ -209,7 +209,7 @@ class TrendingPostView(APIView):
             .filter(date_added__gte=time_window)
         )
 
-        # Step 2: Compute trending score in Python
+        
         for post in posts:
             age_in_days = max((now() - post.date_added).days, 1)
             trending_score = (
@@ -220,12 +220,15 @@ class TrendingPostView(APIView):
             ) / age_in_days
             post.trending_score = trending_score
 
-        # Step 3: Calculate threshold dynamically from posts
+       
         threshold = dynamic_trending_threshold(posts)
 
-        # Step 4: Filter and order
         trending_posts = [p for p in posts if p.trending_score >= threshold]
         trending_posts.sort(key=lambda p: p.trending_score, reverse=True)
+
+        for post in trending_posts:
+            post.trending = True
+            post.save(update_fields=["trending"])
 
         serializer = PostSerializer(trending_posts, many=True, context={"request": request})
 

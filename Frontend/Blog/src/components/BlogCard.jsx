@@ -80,9 +80,17 @@ const BlogCard = ({ featuredPage, post }) => {
         </div>
 
         <div className="absolute inset-0 flex flex-col justify-end lg:p-6 md:p-4 p-2 bg-gradient-to-t from-black/70 via-black/30 to-transparent">
-          <span className="inline-block mb-3 px-3 py-1 text-xs font-medium w-fit text-white bg-red-500 rounded-md shadow-md">
-            {post.category}
-          </span>
+          <div className="flex items-center gap-3 mb-3">
+            <span className="inline-block  px-3 py-1 text-xs font-medium w-fit text-white bg-red-500 rounded-md shadow-md">
+              {post.category}
+            </span>
+            {post.trending && (
+              <span className="inline-flex items-center rounded-md bg-white/90 backdrop-blur px-3 py-1 text-xs font-medium text-gray-900">
+                <TrendingUp className="w-3 h-3 mr-1" />
+                Trending
+              </span>
+            )}
+          </div>
 
           <div className="text-white space-y-2">
             <h3 className="line-clamp-2  text-xl font-bold leading-snug font-serif group-hover:text-white/90 transition-colors">

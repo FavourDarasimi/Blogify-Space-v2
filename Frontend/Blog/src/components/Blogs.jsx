@@ -122,9 +122,13 @@ const Blogs = () => {
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4  gap-6">
-          {trendingPosts.map((post) => (
-            <BlogCard key={post.id} post={post} featuredPage={false} />
-          ))}
+          {trendingPosts ? (
+            trendingPosts.map((post) => (
+              <BlogCard key={post.id} post={post} featuredPage={false} />
+            ))
+          ) : (
+            <p>No Trending Posts yet...</p>
+          )}
         </div>
       </div>
 

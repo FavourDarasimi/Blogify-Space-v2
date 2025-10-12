@@ -7,6 +7,7 @@ import { FaLocationDot, FaPlus, FaCheck } from "react-icons/fa6";
 import Comments from "../components/Comments";
 import { Context } from "../context/Context";
 import CreateBlog from "./CreateBlog";
+import { BeatLoader } from "react-spinners";
 import {
   ArrowLeft,
   Heart as HeartIcon,
@@ -125,7 +126,11 @@ const BlogDetail = ({ setShowLogin }) => {
   };
 
   if (!post) {
-    return <div className="pt-20 text-center text-gray-600">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <BeatLoader color="#dc2626" />
+      </div>
+    );
   }
 
   return (
