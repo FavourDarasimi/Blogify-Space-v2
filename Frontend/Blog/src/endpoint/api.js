@@ -51,7 +51,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         localStorage.removeItem("token");
         localStorage.removeItem("refresh");
-        window.location.href = "/login";
+        window.location.href = "/";
         return Promise.reject(refreshError);
       }
     }
@@ -262,7 +262,7 @@ export const editProfile = async (updatedProfile) => {
     });
     return response.data;
   } catch (error) {
-    throwErr(error);
+    return error;
   }
 };
 

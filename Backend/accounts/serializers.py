@@ -8,7 +8,7 @@ from rest_framework.authtoken.models import Token
 class SignUpSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['username','email', 'password','gender' ]
+        fields = ['username','email', 'password','gender' ,'first_name','last_name']
 
     def create(self,validated_data):
         password = validated_data['password']
@@ -17,20 +17,6 @@ class SignUpSerializer(serializers.ModelSerializer):
         user.save()
         return user    
     
-
-  
-
-class ProfileSerializer(serializers.ModelSerializer):
-    username = serializers.SerializerMethodField(read_only=True)
-    class Meta:
-        model = Profile
-        fields = ['id','user','bio','image','email','phone_number','location','username']
-        read_only_fields = ['user','email','username']
-
-    def get_username(self,obj):
-        request = self.context.get('request')
-        name = request.user.username
-        return name
 
 class LoginSerializer(serializers.Serializer): 
     username = serializers.CharField() 
@@ -42,7 +28,16 @@ class LoginSerializer(serializers.Serializer):
         raise serializers.ValidationError("Invalid credentials")
 
 class UserSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer()
     class Meta:
         model = User
-        fields = ['id','email','username','profile']
+        fields = ['id','email','username','first_name','last_name']
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True) 
+    class Meta:
+        model = Profile
+        fields = ['id','user','bio','image']
+        read_only_fields = ['user']
+
+    

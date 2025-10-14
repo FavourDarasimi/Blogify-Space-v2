@@ -87,8 +87,19 @@ class EditProfile(APIView):
     def put(self, request:Request) :
         profile = Profile.objects.get(user=request.user)    
         data=request.data
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        username = data.get('username')
         serializer = ProfileSerializer(instance=profile,data=data,partial=True,context={'request':request})
         if serializer.is_valid():
+            user = request.user
+            if first_name is not None:
+                user.first_name = first_name
+            if last_name is not None:
+                user.last_name = last_name
+            if username is not None:
+                user.username = username
+            user.save()    
             serializer.save()
             return Response(data=serializer.data,status=status.HTTP_200_OK)    
         return Response(data=serializer.errors,status=status.HTTP_400_BAD_REQUEST)

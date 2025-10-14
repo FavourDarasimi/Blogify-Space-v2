@@ -1,112 +1,210 @@
-import React from "react";
-import { useEffect, useState } from "react";
-import { getProfile } from "../endpoint/api";
-import { IoIosMail, IoIosCall } from "react-icons/io";
-import { FaLocationDot } from "react-icons/fa6";
-import EditProfile from "../components/EditProfile";
-import CreateProfile from "../components/CreateProfile";
-import { CiEdit } from "react-icons/ci";
-import { FaUserCircle } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { Mail, User, FileText, Save, BookOpen, Eye } from "lucide-react";
+import { BeatLoader } from "react-spinners";
+import { getProfile, editProfile } from "../endpoint/api";
+import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 
 const Profile = () => {
-  const [userProfile, setUserProfile] = useState([]);
-  const [show, setShow] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [preview, setPreview] = useState("");
+  const [file, setFile] = useState(null);
+  const [formData, setFormData] = useState({
+    email: "",
+    first_name: "",
+    last_name: "",
+    username: "",
+    bio: "",
+    image: "",
+  });
+
+  const maxBioLength = 500;
+
+  // 🔹 Fetch profile data once
   useEffect(() => {
     const fetchProfile = async () => {
+      setLoading(true);
       try {
         const profile = await getProfile();
-        setUserProfile(profile);
-      } catch (error) {}
+        setFormData({
+          email: profile.user.email || "",
+          first_name: profile.user.first_name || "",
+          last_name: profile.user.last_name || "",
+          username: profile.user.username || "",
+          bio: profile.bio || "",
+          image: profile.image || "",
+        });
+        setPreview(profile.image || "");
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     };
+
     fetchProfile();
-  }, [show]);
+  }, []);
 
-  const name = (username) => {
-    var newName = username.replace(/ /g, "").toLowerCase();
-    return newName;
+  // 🔹 Handle input changes
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
-  return (
-    <div className="pt-32 flex flex-col items-center">
-      {show ? (
-        userProfile ? (
-          <EditProfile setShow={setShow} setUserProfile={setUserProfile} />
-        ) : (
-          <CreateProfile setShow={setShow} />
-        )
-      ) : (
-        ""
-      )}
-      <div className=" bg-dark-white lg:w-50% md:w-70% sm:w-90%  h-fit lg:p-10 md:p-10 sm:p-5 rounded-xl gap-y-3">
-        <div className="flex justify-between">
-          <div className="flex items-center  gap-3">
-            {userProfile.image ? (
-              <img
-                src={`${userProfile.image}`}
-                alt={userProfile.user}
-                className="lg:w-44 lg:h-44 md:w-44 md:h-44 sm:w-24 sm:h-24 rounded-full lg:ml-3"
-              />
-            ) : (
-              <FaUserCircle className="lg:w-44 lg:h-44 md:w-44 md:h-44 sm:w-24 sm:h-24 rounded-full lg:ml-3" />
-            )}
-            <div className="flex flex-col gap-2">
-              <p className="lg:text-3xl md:text-3xl sm:text-18 font-semibold">
-                {userProfile.username}
-              </p>
-              {userProfile.username ? (
-                <p className="text-neutral-400 lg:text-18 md:text-18 sm:text-14">
-                  @{name(userProfile.username)}
-                </p>
-              ) : (
-                ""
-              )}
-            </div>
-          </div>
-          <div>
-            {userProfile ? (
-              <button
-                onClick={() => setShow(true)}
-                className="flex items-center gap-1 bg-blue-600 border-bordercol border-1 p-2 rounded-md text-white lg:text-15 md:text-15 sm:text-xs"
-              >
-                <CiEdit className="w-5 h-5" />
-                Edit Profile
-              </button>
-            ) : (
-              <button
-                onClick={() => setShow(true)}
-                className="flex items-center gap-1 bg-blue-600 border-bordercol border-1 p-2 rounded-md text-white lg:text-15 md:text-15 sm:text-xs"
-              >
-                <FaUserCircle className="w-5 h-5" />
-                Create Profile
-              </button>
-            )}
-          </div>
-        </div>
 
-        <div className="">
-          <p className="lg:text-2xl md:text-2xl sm:text-17 font-semibold pt-5">About Me</p>
-          <p className="lg:text-16 md:text-16 sm:text-14">{userProfile.bio}</p>
-        </div>
+  // 🔹 Handle file uploads and preview
+  const handleFileChange = (e) => {
+    const image = e.target.files[0];
+    if (image) {
+      setFile(image);
+      setPreview(URL.createObjectURL(image));
+      setFormData((prev) => ({ ...prev, image }));
+    }
+  };
 
-        <div>
-          <p className="lg:text-2xl md:text-2xl sm:text-17 font-semibold pt-5 ">
-            Contact Information
-          </p>
-          <div className=" flex flex-col gap-y-4 pt-3">
-            <div className="flex gap-x-3 ">
-              <IoIosMail className="w-7 h-7" />
-              <p className="lg:text-16 md:text-16 sm:text-14">{userProfile.email}</p>
-            </div>
-            <div className="flex gap-x-3">
-              <IoIosCall className="w-7 h-7" />
-              <p className="lg:text-16 md:text-16 sm:text-14">{userProfile.phone_number}</p>
-            </div>
-            <div className="flex gap-x-3">
-              <FaLocationDot className="w-7 h-7" />
-              <p className="lg:text-16 md:text-16 sm:text-14">{userProfile.location}</p>
-            </div>
-          </div>
-        </div>
+  // 🔹 Save profile changes
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaveLoading(true);
+    try {
+      await editProfile({ ...formData, image: file });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setSaveLoading(false);
+      toast.success("Profile Saved Successfully!");
+    } catch (error) {
+      console.error(error);
+      setSaveLoading(false);
+      alert("Failed to save profile.");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <BeatLoader color="#dc2626" />
       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <main className="container mx-auto py-12 px-4 sm:px-6 lg:px-8 max-w-4xl space-y-8">
+        {/* Profile Picture */}
+        <div className="text-center">
+          <img
+            src={preview || "/default-avatar.png"}
+            alt="Profile"
+            className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover mx-auto mb-3"
+          />
+          <label className="cursor-pointer text-sm text-red-600 hover:underline">
+            Change Image
+            <input
+              type="file"
+              name="image"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </label>
+        </div>
+
+        {/* Profile Form */}
+        <form
+          onSubmit={handleSave}
+          className="bg-card border border-border rounded-2xl p-8 shadow-sm space-y-6"
+        >
+          {/* Email */}
+          <div>
+            <label className="flex items-center gap-2 mb-2 font-medium">
+              <Mail className="w-4 h-4 text-primary" /> Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              disabled
+              className="w-full px-4 py-2 border rounded-md bg-gray-100 text-gray-600 focus:ring-red-500"
+            />
+          </div>
+
+          {/* First & Last Name */}
+          <div className="grid grid-cols-2 gap-5">
+            <div>
+              <label className="flex items-center gap-2 mb-2 font-medium">
+                <User className="w-4 h-4 text-primary" /> First Name
+              </label>
+              <input
+                type="text"
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-red-400 resize-none focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="flex items-center gap-2 mb-2 font-medium">
+                <User className="w-4 h-4 text-primary" /> Last Name
+              </label>
+              <input
+                type="text"
+                name="last_name"
+                value={formData.last_name}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-red-400 resize-none focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Username */}
+          <div>
+            <label className="flex items-center gap-2 mb-2 font-medium">
+              <User className="w-4 h-4 text-primary" /> Username
+            </label>
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-red-400 resize-none focus:outline-none"
+            />
+          </div>
+
+          {/* Bio */}
+          <div>
+            <label className="flex items-center gap-2 mb-2 font-medium">
+              <FileText className="w-4 h-4 text-primary" /> Bio
+            </label>
+            <textarea
+              name="bio"
+              value={formData.bio}
+              onChange={handleChange}
+              maxLength={maxBioLength}
+              className="w-full px-4 py-2 border rounded-md bg-background focus:ring-2 focus:ring-red-400 resize-none focus:outline-none min-h-[120px]"
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              {formData.bio.length}/{maxBioLength} characters
+            </p>
+          </div>
+
+          {/* Save Button */}
+          <button
+            type="submit"
+            disabled={saveLoading}
+            className="w-full h-[50px] flex items-center justify-center gap-2 px-6 py-3.5 rounded-lg bg-red-500 text-white font-medium hover:bg-red-500/90 transition-all transform hover:scale-105 active:scale-95 shadow-md"
+          >
+            {saveLoading ? (
+              <BeatLoader size={10} color="#fff" />
+            ) : (
+              <>
+                <Save className="w-5 h-5" /> Save Changes
+              </>
+            )}
+          </button>
+        </form>
+      </main>
     </div>
   );
 };

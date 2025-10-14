@@ -7,6 +7,8 @@ user = settings.AUTH_USER_MODEL
 
 
 class User(AbstractUser):
+    first_name = models.CharField(max_length=10,blank=True,null=True)
+    last_name = models.CharField(max_length=100,blank=True,null=True)
     email = models.EmailField(max_length=255,unique=True)
     gender = models.CharField(max_length=100)
 
@@ -21,9 +23,7 @@ class Profile(models.Model):
     user = models.OneToOneField(user,on_delete=models.CASCADE,null=True,blank=True,related_name='profile')
     bio = models.TextField(max_length=500)
     image = models.ImageField( blank=True,upload_to='images/')  
-    email = models.EmailField(null=True, blank=True)
-    phone_number = models.CharField(max_length=11)
-    location = models.CharField(max_length=200)  
+     
 
     def __str__(self) -> str:
         return str(self.user.username)

@@ -43,7 +43,7 @@ function App() {
             element={<BlogDetail setShowLogin={setShowLogin} />}
           />
           <Route path="/add/post" element={<CreateBlog />} />
-          <Route path="/profile/" element={<Profile />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/saved/post/" element={<SavedPost />} />
         </Routes>
       </div>
