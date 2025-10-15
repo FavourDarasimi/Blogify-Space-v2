@@ -4,6 +4,7 @@ import { BeatLoader } from "react-spinners";
 import { getProfile, editProfile } from "../endpoint/api";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
+import { MdEdit } from "react-icons/md";
 
 const Profile = () => {
   const [loading, setLoading] = useState(false);
@@ -93,14 +94,14 @@ const Profile = () => {
     <div className="min-h-screen bg-background text-foreground">
       <main className="container mx-auto py-12 px-4 sm:px-6 lg:px-8 max-w-4xl space-y-8">
         {/* Profile Picture */}
-        <div className="text-center">
+        <div className="relative w-24 h-24 md:w-40 md:h-40 mx-auto mb-3">
           <img
             src={preview || "/default-avatar.png"}
             alt="Profile"
-            className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover mx-auto mb-3"
+            className="w-full h-full rounded-full object-cover border border-gray-200 shadow-sm"
           />
-          <label className="cursor-pointer text-sm text-red-600 hover:underline">
-            Change Image
+          <label className="absolute bottom-1 right-1 bg-red-500 text-white p-2 rounded-full cursor-pointer hover:bg-red-600 transition">
+            <MdEdit className="w-4 h-4" />
             <input
               type="file"
               name="image"

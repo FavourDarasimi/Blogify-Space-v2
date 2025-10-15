@@ -1,5 +1,5 @@
 import axios from "axios";
-import { createContext, useState } from "react";
+import { createContext, useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 export const Context = createContext(null);
 
@@ -16,6 +16,10 @@ const ContextProvider = (props) => {
     setIsAuth(!!token);
   };
 
+  useEffect(() => {
+    checkIfUserIsAuth();
+  });
+
   const contextValue = {
     categoryPosts,
     setCategoryPosts,
@@ -28,7 +32,9 @@ const ContextProvider = (props) => {
     isAuth,
     setIsAuth,
   };
-  return <Context.Provider value={contextValue}>{props.children}</Context.Provider>;
+  return (
+    <Context.Provider value={contextValue}>{props.children}</Context.Provider>
+  );
 };
 
 export default ContextProvider;

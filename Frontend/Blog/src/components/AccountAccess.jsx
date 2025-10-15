@@ -6,6 +6,7 @@ import { login, signup } from "../endpoint/api";
 import { Context } from "../context/Context";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { BeatLoader } from "react-spinners";
 
 const AccountAccess = ({ setShowLogin }) => {
   const { setIsAuth } = useContext(Context);
@@ -13,7 +14,9 @@ const AccountAccess = ({ setShowLogin }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
-  const [gender, setGender] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [loading, setLoading] = useState("");
   const nav = useNavigate();
 
   const handleLogin = async (e) => {
@@ -38,9 +41,12 @@ const AccountAccess = ({ setShowLogin }) => {
 
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      const data = await signup(username, gender, email, password);
+      const data = await signup(username, firstName, lastName, email, password);
       const log = await login(email, password);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setLoading(false);
       setIsAuth(true);
       setShowLogin(false);
       toast.success("User Signed Up");
@@ -90,25 +96,36 @@ const AccountAccess = ({ setShowLogin }) => {
                 <label className="text-xsl font-semibold mb-1">Username</label>
                 <input
                   type="text"
-                  className="  border-1 rounded-xl p-2 lg:w-96 md:w-80 sm:w-72 h-12 outline-none border-bordercol"
+                  className="  border-1 rounded-xl p-2 l h-12 outline-none border-bordercol focus:outline-none focus:ring-2 focus:ring-red-400"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
-              <div className="flex flex-col">
-                <label className="text-xsl font-semibold mb-1">Gender</label>
 
-                <select
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                  className="  border-1 rounded-xl p-2 lg:w-96 md:w-80 sm:w-72 h-12 outline-none border-bordercol"
-                >
-                  <option selected disabled value="">
-                    Choose Your Gender
-                  </option>
-                  <option value="MALE">MALE</option>
-                  <option value="FEMALE">FEMALE</option>
-                </select>
+              <div className="grid grid-cols-2 gap-5">
+                <div className="flex flex-col">
+                  <label className="text-xsl font-semibold mb-1">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    className="  border-1 rounded-xl p-2 2 h-12 outline-none border-bordercol focus:outline-none focus:ring-2 focus:ring-red-400"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                  />
+                </div>
+
+                <div className="flex flex-col">
+                  <label className="text-xsl font-semibold mb-1">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    className="  border-1 rounded-xl p-2 h-12 outline-none border-bordercol focus:outline-none focus:ring-2 focus:ring-red-400"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
           ) : (
@@ -119,7 +136,7 @@ const AccountAccess = ({ setShowLogin }) => {
             <label className="text-xsl font-semibold mb-1">Email</label>
             <input
               type="email"
-              className="  border-1 rounded-xl p-2 lg:w-96 md:w-80 sm:w-72 h-12 outline-none border-bordercol"
+              className="  border-1 rounded-xl p-2  h-12 outline-none border-bordercol focus:outline-none focus:ring-2 focus:ring-red-400"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -128,14 +145,20 @@ const AccountAccess = ({ setShowLogin }) => {
             <label className="text-xsl font-semibold mb-1">Password</label>
             <input
               type="password"
-              className="  border-1 rounded-xl p-2 lg:w-96 md:w-80 sm:w-72 h-12 outline-none border-bordercol"
+              className="  border-1 rounded-xl p-2  h-12 outline-none border-bordercol focus:outline-none focus:ring-2 focus:ring-red-400"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
-          <button className="border-bordercol border-1 py-3 sm:w-72 md:w-80 rounded-full bg-dark-white lg:w-full text-xssl">
-            {currentStatus === "login" ? "Sign in" : "Sign up"}
+          <button className=" py-3 sm:w-72 md:w-80 rounded-full bg-red-500 text-white lg:w-full ">
+            {loading ? (
+              <BeatLoader size={10} color="#fff" />
+            ) : currentStatus === "login" ? (
+              "Sign in"
+            ) : (
+              "Sign up"
+            )}
           </button>
 
           <div className="flex place-items-start  gap-3 lg:w-96 sm:w-72 md:w-80">

@@ -44,7 +44,7 @@ function App() {
           />
           <Route path="/add/post" element={<CreateBlog />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/saved/post/" element={<SavedPost />} />
+          <Route path="/saved/post" element={<SavedPost />} />
         </Routes>
       </div>
       <div cla>

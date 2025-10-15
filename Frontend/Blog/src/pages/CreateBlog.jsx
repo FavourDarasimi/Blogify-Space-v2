@@ -3,7 +3,6 @@ import { getCategories, addPost } from "../endpoint/api";
 import { Context } from "../context/Context";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import cancel from "../assets/icons8-cross-24.png";
 import "react-toastify/dist/ReactToastify.css";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
@@ -12,13 +11,12 @@ import { BeatLoader } from "react-spinners";
 export default function CreateBlog() {
   const { setShowCreatePost } = useContext(Context);
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(""); // ✅ single
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [loading, setLoading] = useState();
-
+  const [loading, setLoading] = useState(false);
   const nav = useNavigate();
 
   // Fetch categories
@@ -26,14 +24,15 @@ export default function CreateBlog() {
     const fetchCategories = async () => {
       try {
         const response = await getCategories();
-        setCategories(response.data);
+        setCategories(response.data || []);
       } catch (error) {
-        toast.error("Failed to load categories");
+        toast.error("Failed to load categories.");
       }
     };
     fetchCategories();
   }, []);
 
+  // Handle image upload
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -49,40 +48,29 @@ export default function CreateBlog() {
     reader.readAsDataURL(file);
   };
 
+  // Handle submit
   const handleSubmit = async (e) => {
-    setLoading(true);
     e.preventDefault();
+    if (loading) return;
 
-    if (!title.trim()) {
-      setLoading(false);
-      return toast.error("Please enter a title");
-    }
-    if (!body.trim()) {
-      setLoading(false);
-      return toast.error("Please enter content");
-    }
-    if (!selectedCategory) {
-      setLoading(false);
-      return toast.error("Please select a category");
-    }
+    if (!title.trim()) return toast.error("Please enter a title.");
+    if (!body.trim()) return toast.error("Please enter content.");
+    if (!selectedCategory) return toast.error("Please select a category.");
 
+    setLoading(true);
     try {
       const res = await addPost(selectedCategory, title, body, imageFile);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setLoading(false);
-      toast.success("Post Created Successfully!");
-      nav(`/detail/${res.data.id}`);
-
-      if (res.status === 201) {
-      }
+      toast.success("Post created successfully!");
+      setTimeout(() => {
+        nav(`/detail/${res.data.id}`);
+      }, 1200);
     } catch (error) {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      setLoading(false);
-      toast.error("Error creating post");
-      console.log(error);
+      console.error(error);
+      toast.error("Error creating post. Please try again.");
     }
   };
 
+  // Quill config
   const quillModules = {
     toolbar: [
       [{ header: [1, 2, 3, false] }],
@@ -110,14 +98,11 @@ export default function CreateBlog() {
   ];
 
   return (
-    <div className="mt-5 flex items-center justify-center  p-4">
+    <div className="mt-5 flex items-center justify-center p-4">
       <form
         onSubmit={handleSubmit}
         className="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-6 md:p-8"
       >
-        {/* Close Button */}
-
-        {/* Header */}
         <h1 className="text-2xl md:text-3xl font-semibold text-center text-gray-800 mb-6">
           Create Post
         </h1>
@@ -127,18 +112,18 @@ export default function CreateBlog() {
           <label className="text-base font-semibold text-gray-800">
             Category
           </label>
-
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
             {categories.map((cat) => (
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => setSelectedCategory(cat.name)} // ✅ select one
+                disabled={loading}
+                onClick={() => setSelectedCategory(cat.name)}
                 className={`px-4 py-2 line-clamp-1 rounded-lg text-sm font-medium border-2 transition-all ${
                   selectedCategory === cat.name
                     ? "bg-red-50 text-red-700 border-red-500"
                     : "bg-gray-100 text-gray-700 border-transparent hover:border-red-300"
-                }`}
+                } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 {cat.name}
               </button>
@@ -160,6 +145,7 @@ export default function CreateBlog() {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Enter an engaging title..."
             className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-red-500 text-base"
+            disabled={loading}
           />
         </div>
 
@@ -173,6 +159,7 @@ export default function CreateBlog() {
             modules={quillModules}
             formats={quillFormats}
             placeholder="Write your story..."
+            readOnly={loading}
             className="bg-background"
           />
           <p className="text-xs text-muted-foreground text-right pt-2">
@@ -203,6 +190,7 @@ export default function CreateBlog() {
                     setImagePreview(null);
                   }}
                   className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+                  disabled={loading}
                 >
                   Remove
                 </button>
@@ -223,6 +211,7 @@ export default function CreateBlog() {
                 accept="image/*"
                 onChange={handleImageChange}
                 className="hidden"
+                disabled={loading}
               />
             </label>
           )}
@@ -233,21 +222,24 @@ export default function CreateBlog() {
           <button
             type="button"
             onClick={() => {
+              if (loading) return;
               setTitle("");
               setBody("");
               setSelectedCategory("");
               setImageFile(null);
               setImagePreview(null);
             }}
-            className="px-5 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100"
+            className="px-5 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 disabled:opacity-50"
+            disabled={loading}
           >
             Clear All
           </button>
           <button
             type="submit"
-            className=" gap-3 px-6 w-[200px] py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            className="flex items-center justify-center gap-3 px-6 w-[200px] py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-70"
+            disabled={loading}
           >
-            {loading ? <BeatLoader size={10} /> : "Publish Post"}
+            {loading ? <BeatLoader size={10} color="#fff" /> : "Publish Post"}
           </button>
         </div>
       </form>

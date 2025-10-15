@@ -140,11 +140,18 @@ export const logout = async () => {
   }
 };
 
-export const signup = async (username, gender, email, password) => {
+export const signup = async (
+  username,
+  frst_name,
+  last_name,
+  email,
+  password
+) => {
   try {
     const response = await api.post("/account/signup/", {
       username,
-      gender,
+      frst_name,
+      last_name,
       email,
       password,
     });

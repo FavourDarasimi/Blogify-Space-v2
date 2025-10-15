@@ -10,7 +10,7 @@ def get_time_window(timeframe: str = "weekly"):
     Default is 'weekly'.
     """
     timeframes = {
-        "daily": timedelta(days=1),
+      
         "weekly": timedelta(days=7),
         "monthly": timedelta(days=30),
         "all": timedelta(days=3650),  # ~10 years, for all-time

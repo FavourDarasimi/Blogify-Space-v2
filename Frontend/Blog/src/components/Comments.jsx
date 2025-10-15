@@ -1,24 +1,43 @@
 // ...existing code...
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import cancel from "../assets/icons8-cross-24.png";
-import { FaUserCircle } from "react-icons/fa";
-import { IoSend } from "react-icons/io5";
+import { RxCross1 } from "react-icons/rx";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { RxCross1 } from "react-icons/rx";
+import { BeatLoader } from "react-spinners";
 
-const Comments = ({ post, setShowComments, setCommentChange }) => {
+const Comments = ({
+  post,
+  setShowComments,
+  setCommentChange,
+  commentChange,
+}) => {
   const [comments, setComments] = useState([]);
   const [comment, setComment] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true); // 🟢 loading state
+  const [fetchError, setFetchError] = useState(null); // 🔴 API error state
 
   useEffect(() => {
-    axios
-      .get(`http://127.0.0.1:8000/blog/comments/${post}`)
-      .then((response) => setComments(response.data))
-      .catch((error) => alert(error.message));
-  }, [comment]);
+    const fetchComments = async () => {
+      try {
+        setLoading(true);
+        setFetchError(null);
+
+        const response = await axios.get(
+          `http://127.0.0.1:8000/blog/comments/${post}`
+        );
+        setComments(response?.data || []);
+      } catch (err) {
+        console.error("Error fetching comments:", err);
+        setFetchError("Failed to load comments. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchComments();
+  }, [commentChange]); // still re-fetches on new comment
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,49 +45,62 @@ const Comments = ({ post, setShowComments, setCommentChange }) => {
       const token = localStorage.getItem("token");
       const response = await axios.post(
         `http://127.0.0.1:8000/blog/comment/create/${post}`,
-        { comment: comment },
+        { comment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       setComment("");
       setCommentChange(post.comments_count + 1);
+
       if (response.status === 201) {
-        toast.success("Comment Created Successful");
+        toast.success("Comment posted successfully!");
       }
-    } catch (error) {
-      for (var i = 0; i < JSON.stringify(error).length; i++) {
-        var err = JSON.stringify(Object.values(error)[i])
-          .replace(/[\[\]]/g, "")
-          .replace(/"/g, "");
-        toast.error(err.charAt(0).toUpperCase() + err.slice(1));
-      }
+    } catch (err) {
+      console.error("Error posting comment:", err);
+      toast.error("Failed to post comment. Please try again.");
     }
   };
 
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-50 grid place-items-center">
-      <div className="bg-white p-3 w-full max-w-[600px] rounded-xl shadow-lg overflow-hidden flex flex-col max-h-[80vh] relative">
-        {/* Close button */}
-        <div className="flex justify-between p-3">
-          <div className="px-6 pb-2">
-            <h1 className="text-xl md:text-2xl font-semibold text-gray-900 text-center">
-              Comments
-            </h1>
-          </div>
+      <div className="bg-white  p-3 w-full max-w-[600px] rounded-xl shadow-lg overflow-hidden flex flex-col max-h-[80vh] relative">
+        {/* Header */}
+        <div className="flex justify-between p-3 border-b">
+          <h1 className="text-xl md:text-2xl font-semibold text-gray-900 text-center">
+            Comments
+          </h1>
           <RxCross1
             onClick={() => setShowComments(false)}
             className="w-5 h-5 cursor-pointer hover:opacity-70 transition"
           />
         </div>
 
-        {/* Header */}
-
-        {/* Comments list */}
+        {/* Comment Section */}
         <div className="overflow-y-auto px-6 pb-4 space-y-4 flex-1">
-          {comments.length === 0 ? (
+          {/* Loading State */}
+          {loading && (
+            <div className="flex justify-center items-center h-40">
+              <BeatLoader color="#dc2626" />
+            </div>
+          )}
+
+          {/* Error State */}
+          {fetchError && !loading && (
+            <div className="flex justify-center items-center h-40">
+              <p className="text-red-500 text-sm">{fetchError}</p>
+            </div>
+          )}
+
+          {/* No Comments */}
+          {!loading && !fetchError && comments.length === 0 && (
             <p className="text-center text-gray-500 py-8 text-sm md:text-base">
               No comments yet. Be the first to comment!
             </p>
-          ) : (
+          )}
+
+          {/* Comments */}
+          {!loading &&
+            !fetchError &&
             comments.map((commentItem) => (
               <div
                 key={commentItem.id}
@@ -89,7 +121,7 @@ const Comments = ({ post, setShowComments, setCommentChange }) => {
                   )}
                 </div>
 
-                {/* Comment content */}
+                {/* Comment Body */}
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-sm md:text-base text-gray-900">
@@ -104,11 +136,10 @@ const Comments = ({ post, setShowComments, setCommentChange }) => {
                   </p>
                 </div>
               </div>
-            ))
-          )}
+            ))}
         </div>
 
-        {/* Form */}
+        {/* Comment Form */}
         <form
           onSubmit={handleSubmit}
           className="border-t px-6 py-4 space-y-3 bg-gray-50"
@@ -125,6 +156,7 @@ const Comments = ({ post, setShowComments, setCommentChange }) => {
               maxLength={500}
             />
             {error && <p className="text-sm text-red-500">{error}</p>}
+
             <div className="flex items-center justify-between">
               <span className="text-xs md:text-sm text-gray-500">
                 {comment.length}/500 characters

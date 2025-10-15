@@ -1,13 +1,6 @@
-// ...existing code...
+// BlogDetail.jsx
 import React, { useEffect, useState, useContext } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { FaRegComment, FaUserCircle } from "react-icons/fa";
-import { IoIosMail, IoIosCall } from "react-icons/io";
-import { FaLocationDot, FaPlus, FaCheck } from "react-icons/fa6";
-import Comments from "../components/Comments";
-import { Context } from "../context/Context";
-import CreateBlog from "./CreateBlog";
-import { BeatLoader } from "react-spinners";
 import {
   ArrowLeft,
   Heart as HeartIcon,
@@ -15,117 +8,115 @@ import {
   Share2,
   Clock,
 } from "lucide-react";
+import { FaPlus, FaCheck } from "react-icons/fa6";
+import { FaUserCircle } from "react-icons/fa";
+import { toast } from "react-toastify";
+import { BeatLoader } from "react-spinners";
+import Comments from "../components/Comments";
+import { Context } from "../context/Context";
 import {
   getPostDetail,
   likePost,
   getRelatedPost,
   savePost,
-  getUser,
 } from "../endpoint/api";
-import axios from "axios";
-import redheart from "../assets/red-heart-icon.svg";
-import heart from "../assets/heart-thin-icon.svg";
-import EditPost from "../components/EditPost";
-import { CiEdit } from "react-icons/ci";
-import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+// import DOMPurify from "dompurify"; // optional for sanitizing HTML
 
 const BlogDetail = ({ setShowLogin }) => {
   const { isAuth } = useContext(Context);
-  const [showComments, setShowComments] = useState(null);
   const { postId } = useParams();
-  const [post, setPost] = useState(null);
-  const [userLiked, setUserLiked] = useState();
-  const [commentChange, setCommentChange] = useState([]);
-  const [like, setLike] = useState("");
-  const [savedPost, setSavedPost] = useState("");
-  const [userSaved, setUserSaved] = useState(false);
-  const [show, setShow] = useState(false);
-  const [relatedPosts, setRelatedPosts] = useState([]);
   const navigate = useNavigate();
 
+  const [post, setPost] = useState(null);
+  const [relatedPosts, setRelatedPosts] = useState([]);
+  const [showComments, setShowComments] = useState(null);
+  const [commentChange, setCommentChange] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  /** Fetch post details */
   const fetchDetailPost = async () => {
-    const posts = await getPostDetail(postId);
-    setPost(posts.data);
-    setUserLiked(posts.user_liked);
-    setUserSaved(posts.user_saved);
+    try {
+      const res = await getPostDetail(postId);
+      setPost(res.data);
+    } catch (err) {
+      toast.error("Failed to load post details");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  /** Fetch related posts */
   const fetchRelatedPosts = async () => {
-    const relatedPost = await getRelatedPost(postId);
-    setRelatedPosts(relatedPost.data.slice(0, 3) || []);
+    try {
+      const res = await getRelatedPost(postId);
+      setRelatedPosts(res.data.slice(0, 3) || []);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   useEffect(() => {
     fetchDetailPost();
-  }, [show, like, postId, savedPost, commentChange]);
-
-  useEffect(() => {
     fetchRelatedPosts();
-  }, [postId]);
+  }, [postId, commentChange]);
 
-  const isUsepostost = (usepostost, users) => {
-    return usepostost == users;
+  /** Helper: Require Auth wrapper */
+  const requireAuth = (callback) => {
+    if (!isAuth) setShowLogin(true);
+    else callback();
   };
 
-  const handleLike = async (post) => {
+  /** Like / Unlike Post */
+  const handleLike = async () => {
     try {
-      const likeResp = await likePost(post.id);
-      setLike(post.likes);
-      // Toggle local like state for immediate UI feedback
-      setUserLiked((v) => !v);
-      if (likeResp.status === 200) {
-        toast.success(userLiked ? "Post Unliked" : "Post Liked");
-      }
-    } catch (error) {
-      for (var i = 0; i < JSON.stringify(error).length; i++) {
-        var err = JSON.stringify(Object.values(error)[i])
-          .replace(/[\[\]]/g, "")
-          .replace(/"/g, "");
-        toast.error(err.charAt(0).toUpperCase() + err.slice(1));
-      }
-    }
-  };
-  const handleSavePost = async (post) => {
-    try {
-      const save = await savePost(post.id);
-      setSavedPost(post.saved);
-      setUserSaved((v) => !v);
-      if (save.status === 200) {
-        toast.success(!userSaved ? "Post Saved" : "Post Unsaved");
-      }
-    } catch (error) {
-      for (var i = 0; i < JSON.stringify(error).length; i++) {
-        var err = JSON.stringify(Object.values(error)[i])
-          .replace(/[\[\]]/g, "")
-          .replace(/"/g, "");
-        toast.error(err.charAt(0).toUpperCase() + err.slice(1));
-      }
+      const res = await likePost(post.id);
+      setPost((prev) => ({
+        ...prev,
+        user_liked: !prev.user_liked,
+        likes_count: prev.user_liked
+          ? prev.likes_count - 1
+          : prev.likes_count + 1,
+      }));
+      toast.success(!post.user_liked ? "Post Liked" : "Post Unliked");
+    } catch {
+      toast.error("Failed to update like");
     }
   };
 
+  /** Save / Unsave Post */
+  const handleSavePost = async () => {
+    try {
+      const res = await savePost(post.id);
+      setPost((prev) => ({ ...prev, user_saved: !prev.user_saved }));
+      toast.success(!post.user_saved ? "Post Saved" : "Post Unsaved");
+    } catch {
+      toast.error("Failed to save post");
+    }
+  };
+
+  /** Share Post */
   const handleShare = async () => {
     const url = window.location.href;
     try {
       if (navigator.share) {
-        await navigator.share({
-          title: post?.title,
-          url,
-        });
+        await navigator.share({ title: post.title, url });
       } else {
         await navigator.clipboard.writeText(url);
-        toast.success("Link copied to clipboard");
+        toast.success("Link copied to clipboard!");
       }
-    } catch (err) {
+    } catch {
       toast.error("Unable to share");
     }
   };
 
-  const name = (username) => {
-    var newName = username.replace(/ /g, "").toLowerCase();
-    return newName;
-  };
+  /** Set Page Title */
+  useEffect(() => {
+    if (post) document.title = `${post.title} - Blogify Space`;
+  }, [post]);
 
-  if (!post) {
+  /** Loading State */
+  if (loading || !post) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <BeatLoader color="#dc2626" />
@@ -135,22 +126,23 @@ const BlogDetail = ({ setShowLogin }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="container py-8 md:py-12">
-        <div
+      <main className="container mx-auto px-4 py-8 md:py-12">
+        {/* Back Button */}
+        <button
           onClick={() => navigate(-1)}
-          className="inline-flex cursor-pointer items-center text-sm text-gray-600 hover:text-gray-900 transition-colors mb-6"
+          className="inline-flex items-center mb-6 text-sm text-gray-600 hover:text-gray-900 transition"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
-        </div>
+        </button>
 
         <article className="max-w-4xl mx-auto">
-          {/* Post Header */}
+          {/* Header */}
           <div className="mb-8">
             <span className="inline-flex items-center rounded-full bg-red-100 text-red-600 px-3 py-1 text-sm font-semibold mb-4">
               {post.category}
             </span>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight font-serif mb-4">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold font-serif mb-4">
               {post.title}
             </h1>
             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-6 text-gray-600 text-sm md:text-base">
@@ -159,9 +151,7 @@ const BlogDetail = ({ setShowLogin }) => {
               </span>
               <span className="flex items-center gap-2 mt-2 sm:mt-0">
                 <Clock className="w-4 h-4 text-gray-500" />
-                <span className="text-gray-600">
-                  {post.time_since_created || post.timeAgo}
-                </span>
+                {post.time_since_created}
               </span>
             </div>
           </div>
@@ -173,27 +163,20 @@ const BlogDetail = ({ setShowLogin }) => {
                 src={post.image}
                 alt={post.title}
                 loading="lazy"
-                className="w-full h-80 md:h-96 object-cover"
+                className="w-full aspect-[16/9] object-cover hover:scale-[1.02] transition-transform duration-500"
               />
             </div>
           )}
 
-          {/* Post Actions */}
-          <div className="flex items-center gap-3 pb-6 border-b mb-8">
+          {/* Actions */}
+          <div className="flex items-center gap-3 pb-6 border-b mb-8 flex-wrap">
+            {/* Like */}
             <button
-              onClick={() => {
-                if (!isAuth) {
-                  setShowLogin(true);
-                } // block if not log
-                // ged in
-                else {
-                  handleLike(post);
-                }
-              }}
-              className={`inline-flex items-center gap-2 px-3 py-1 border rounded-full text-sm font-medium transition ${
+              onClick={() => requireAuth(handleLike)}
+              className={`inline-flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition-all duration-300 ${
                 post.user_liked
-                  ? "bg-red-600 text-white border-transparent"
-                  : "bg-white text-gray-800 border-gray-200"
+                  ? "bg-red-600 text-white border-transparent hover:bg-red-700"
+                  : "bg-white text-gray-800 border-gray-300 hover:bg-gray-50"
               }`}
             >
               <HeartIcon
@@ -201,126 +184,112 @@ const BlogDetail = ({ setShowLogin }) => {
                   post.user_liked ? "text-white" : "text-gray-700"
                 }`}
               />
-              <span>{post.likes_count ?? 0}</span>
+              {post.likes_count}
             </button>
 
+            {/* Comments */}
             <button
-              onClick={() => {
-                if (!isAuth) {
-                  setShowLogin(true);
-                } else {
-                  setShowComments((s) => (s === post.id ? null : post.id));
-                }
-              }}
-              className="inline-flex items-center gap-2 px-3 py-1 border rounded-full text-sm font-medium bg-white text-gray-800 border-gray-200"
+              onClick={() =>
+                requireAuth(() =>
+                  setShowComments((s) => (s === post.id ? null : post.id))
+                )
+              }
+              className="inline-flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium bg-white text-gray-800 border-gray-300 hover:bg-gray-50 transition"
             >
               <MessageCircle className="w-4 h-4 text-gray-700" />
-              <span>{post.comments_count ?? 0}</span>
+              {post.comments_count}
             </button>
 
+            {/* Share */}
             <button
-              onClick={() => {
-                if (!isAuth) {
-                  setShowLogin(true);
-                } else {
-                  handleShare();
-                }
-              }}
-              className="inline-flex items-center gap-2 px-3 py-1 border rounded-full text-sm font-medium bg-white text-gray-800 border-gray-200"
+              onClick={() => requireAuth(handleShare)}
+              className="inline-flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium bg-white text-gray-800 border-gray-300 hover:bg-gray-50 transition"
             >
               <Share2 className="w-4 h-4 text-gray-700" />
-              <span>Share</span>
+              Share
             </button>
 
+            {/* Save */}
             <button
-              onClick={() => {
-                if (!isAuth) {
-                  setShowLogin(true);
-                } else {
-                  handleSavePost(post);
-                }
-              }}
-              className="inline-flex items-center gap-2 px-3 py-1 border rounded-full text-sm font-medium bg-white text-gray-800 border-gray-200 ml-auto"
+              onClick={() => requireAuth(handleSavePost)}
+              className={`ml-auto inline-flex items-center gap-2 px-4 py-2 border rounded-full text-sm font-medium transition ${
+                post.user_saved
+                  ? "bg-green-100 text-green-700 border-green-300 hover:bg-green-200"
+                  : "bg-white text-gray-800 border-gray-300 hover:bg-gray-50"
+              }`}
             >
               {post.user_saved ? (
                 <FaCheck className="w-4 h-4" />
               ) : (
                 <FaPlus className="w-4 h-4" />
               )}
-              <span>{post.user_saved ? "Saved" : "Save"}</span>
+              {post.user_saved ? "Saved" : "Save"}
             </button>
           </div>
 
-          {/* Post Content */}
-          <div className="prose prose-lg max-w-none mb-12">
-            <p
-              dangerouslySetInnerHTML={{ __html: post.body }}
-              className="text-lg text-gray-700 leading-relaxed mb-6"
-            />
-          </div>
+          {/* Body */}
+          <div
+            className="prose prose-lg max-w-none mb-12 text-gray-700 leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: post.body }}
+            // Optionally sanitize:
+            // dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.body) }}
+          />
 
-          {/* Comments Toggle / Component */}
-          <div className="mb-12">
-            {showComments === post.id ? (
-              <Comments
-                post={post.id}
-                setShowComments={setShowComments}
-                setCommentChange={setCommentChange}
-              />
-            ) : (
-              <div className="border-t px-4 py-3 flex justify-end">
-                <button
-                  onClick={() => {
-                    if (!isAuth) {
-                      setShowLogin(true);
-                    } else {
-                      setShowComments(post.id);
-                    }
-                  }}
-                  className="flex items-center gap-2 border border-gray-300 text-gray-700 text-sm font-medium px-4 py-2 rounded-md hover:bg-gray-100 transition"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  View Comments ({post.comments_count ?? 0})
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Comments Section */}
+          {showComments === post.id ? (
+            <Comments
+              post={post.id}
+              setShowComments={setShowComments}
+              setCommentChange={setCommentChange}
+              commentChange={commentChange}
+            />
+          ) : (
+            <div className="border-t pt-4 flex justify-end">
+              <button
+                onClick={() => requireAuth(() => setShowComments(post.id))}
+                className="flex items-center gap-2 border border-gray-300 text-gray-700 text-sm font-medium px-4 py-2 rounded-md hover:bg-gray-100 transition"
+              >
+                <MessageCircle className="h-4 w-4" />
+                View Comments ({post.comments_count})
+              </button>
+            </div>
+          )}
 
           {/* Related Posts */}
-          {relatedPosts && relatedPosts.length > 0 && (
-            <div className="border-t pt-12">
+          {relatedPosts.length > 0 && (
+            <section className="border-t pt-12 mt-12">
               <h2 className="text-2xl md:text-3xl font-bold font-serif mb-6">
                 Related Articles
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {relatedPosts.map((post) => (
-                  <Link key={post.id} to={`/detail/${post.id}`}>
-                    <div className="overflow-hidden rounded-lg bg-white shadow-sm p-4 hover:shadow-md transition border-[1px] border-gray-300">
+                {relatedPosts.map((rp) => (
+                  <Link key={rp.id} to={`/detail/${rp.id}`}>
+                    <div className="overflow-hidden rounded-lg bg-white shadow-sm p-4 hover:shadow-md transition border border-gray-200 hover:-translate-y-1 duration-300">
                       <p className="text-xs inline-block bg-red-100 text-red-600 px-2 py-1 rounded-full mb-3">
-                        {post.category}
+                        {rp.category}
                       </p>
-                      <h3 className="text-lg line-clamp-2 md:text-xl font-semibold text-gray-900 mb-2 group-hover:text-red-600">
-                        {post.title}
+                      <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-red-600">
+                        {rp.title}
                       </h3>
                       <div className="flex items-center gap-3">
-                        {post.user?.profile?.image ? (
+                        {rp.user?.profile?.image ? (
                           <img
-                            src={post.user.profile.image}
-                            alt=""
+                            src={rp.user.profile.image}
+                            alt={rp.user.username}
                             className="w-8 h-8 rounded-full object-cover"
                           />
                         ) : (
                           <FaUserCircle className="w-8 h-8 text-gray-400" />
                         )}
                         <div className="text-sm text-gray-600">
-                          {post.user?.username}
+                          {rp.user?.username}
                         </div>
                       </div>
                     </div>
                   </Link>
                 ))}
               </div>
-            </div>
+            </section>
           )}
         </article>
       </main>
@@ -329,4 +298,3 @@ const BlogDetail = ({ setShowLogin }) => {
 };
 
 export default BlogDetail;
-// ...existing code...

@@ -8,32 +8,41 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const Trending = () => {
   const [activeCategory, setActiveCategory] = useState("Discover");
-  const [posts, setPost] = useState([]);
+  const [allPosts, setAllPosts] = useState([]);
+  const [filteredPosts, setFilteredPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // 🔹 Fetch all trending posts once
   useEffect(() => {
-    const getTrendingPost = async () => {
+    const fetchTrendingPosts = async () => {
+      setLoading(true);
       try {
         const response = await getTopPost();
-        const trendingPosts = response.data;
-        const filteredPosts =
-          activeCategory === "Discover"
-            ? trendingPosts
-            : trendingPosts.filter((post) => post.category === activeCategory);
-        setPost(filteredPosts);
+        const trendingPosts = response?.data || [];
+        setAllPosts(trendingPosts);
       } catch (error) {
-        console.log(error);
+        console.error("Failed to load trending posts:", error);
       } finally {
         setLoading(false);
       }
     };
-    getTrendingPost();
-  }, [activeCategory]);
+    fetchTrendingPosts();
+  }, []);
+
+  // 🔹 Filter posts locally when category changes
+  useEffect(() => {
+    const filtered =
+      activeCategory === "Discover"
+        ? allPosts
+        : allPosts.filter((post) => post.category === activeCategory);
+    setFilteredPosts(filtered);
+  }, [activeCategory, allPosts]);
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
+      {/* Hero Section */}
       <section className="w-full py-12 md:py-20 relative overflow-hidden border-b">
-        <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-pink-50"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-pink-50" />
 
         <div className="container px-4 md:px-6 relative">
           <div className="flex items-center gap-3 mb-6">
@@ -52,6 +61,7 @@ const Trending = () => {
         </div>
       </section>
 
+      {/* Main Section */}
       <main className="container py-12 md:py-16">
         {/* Filter Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
@@ -60,7 +70,8 @@ const Trending = () => {
               Filter by Category
             </h2>
             <p className="text-gray-600">
-              {posts.length} {posts.length === 1 ? "article" : "articles"} found
+              {filteredPosts.length}{" "}
+              {filteredPosts.length === 1 ? "article" : "articles"} found
             </p>
           </div>
           <CategoryFilter
@@ -69,29 +80,31 @@ const Trending = () => {
           />
         </div>
 
+        {/* Loading State */}
         {loading ? (
-          <div className="text-center">
+          <div className="text-center py-20">
             <BeatLoader color="#dc2626" />
           </div>
-        ) : (
-          <AnimatePresence>
+        ) : filteredPosts.length > 0 ? (
+          <AnimatePresence mode="wait">
             <motion.ul
+              key={activeCategory}
               className="space-y-3"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.5 }}
             >
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {posts.map((post, idx) => (
+                {filteredPosts.map((post, idx) => (
                   <BlogCard key={post.id ?? idx} post={post} />
                 ))}
               </div>
             </motion.ul>
           </AnimatePresence>
-        )}
-
-        {posts.length === 0 && (
+        ) : (
           <div className="text-center py-20">
+            <TrendingUp className="h-16 w-16 text-gray-400 mx-auto mb-4 opacity-50" />
             <p className="text-lg text-gray-600">
               No articles found in this category
             </p>
