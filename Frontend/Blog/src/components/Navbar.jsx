@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Search, Menu, X, User, Bookmark } from "lucide-react";
 import { useState, useEffect, useContext } from "react";
 import { Context } from "../context/Context";
-import { logout, getProfile } from "../endpoint/api";
+import { logout } from "../endpoint/api";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaRegCircleUser } from "react-icons/fa6";
@@ -12,41 +12,28 @@ import { IoIosArrowDown } from "react-icons/io";
 const Navbar = ({ setShowLogin }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { setShowCreatePost, isAuth, setIsAuth } = useContext(Context);
+
+  const {
+    setShowCreatePost,
+    isAuth,
+    setIsAuth,
+    profile,
+    setProfile,
+    isLoading,
+  } = useContext(Context);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
 
   const isActive = (path) => location.pathname === path;
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        if (!isAuth) {
-          setLoading(false);
-          return;
-        }
-
-        const res = await getProfile();
-        setProfile(res);
-      } catch (error) {
-        console.error("Error loading profile:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, [isAuth]);
 
   const handleLogout = async () => {
     try {
       await logout();
       toast.success("Logged out successfully!");
       setIsAuth(false);
+      setProfile(null); // clear profile data
       setUserMenu(false);
       navigate("/");
     } catch (err) {
@@ -55,6 +42,7 @@ const Navbar = ({ setShowLogin }) => {
     }
   };
 
+  // Close menu on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -68,13 +56,21 @@ const Navbar = ({ setShowLogin }) => {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
+  // Close search on ESC
   useEffect(() => {
     const handleEscape = (e) => e.key === "Escape" && setSearchOpen(false);
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
-  if (loading) {
+  const getInitials = (firstName, lastName) => {
+    const initials = `${firstName.charAt(0).toUpperCase()}${lastName
+      .charAt(0)
+      .toUpperCase()} `;
+    return initials;
+  };
+
+  if (isLoading) {
     return (
       <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-xl">
         <div className="md:px-10 px-5 flex h-20 items-center justify-between">
@@ -144,20 +140,41 @@ const Navbar = ({ setShowLogin }) => {
               <div className="relative">
                 <button
                   onClick={() => setUserMenu(!userMenu)}
-                  className="user-menu p-3 rounded-full hover:bg-red-500 hover:text-white border flex items-center gap-2 transition-colors duration-700"
+                  className="user-menu p-2 rounded-full hover:bg-red-500 hover:text-white border flex items-center gap-2 transition-colors duration-700"
                 >
-                  <FaRegCircleUser className="h-5 w-5" />
+                  {profile?.image ? (
+                    <img
+                      src={profile?.image || "/default-avatar.png"}
+                      alt="User avatar"
+                      className="w-7 h-7 rounded-full object-cover"
+                    />
+                  ) : (
+                    <FaRegCircleUser className="w-6 h-6" />
+                  )}
+
                   <IoIosArrowDown className="h-4 w-4" />
                 </button>
 
                 {userMenu && (
                   <div className="menu-button absolute right-0 mt-2 bg-white border border-gray-200 shadow-lg rounded-xl w-60 py-2 z-50">
                     <div className="flex items-center gap-3 px-4 py-2">
-                      <img
-                        src={profile?.image || "/default-avatar.png"}
-                        alt="User avatar"
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
+                      {profile?.image ? (
+                        <img
+                          src={profile?.image || "/default-avatar.png"}
+                          alt="User avatar"
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="bg-red-500 w-12 h-12 text-white font-semibold text-xl rounded-full flex items-center justify-center">
+                          <h1>
+                            {getInitials(
+                              profile?.user?.first_name || "User",
+                              profile?.user?.last_name || ""
+                            )}
+                          </h1>
+                        </div>
+                      )}
+
                       <div>
                         <p className="font-semibold text-sm">
                           {profile?.user?.first_name || "User"}{" "}
@@ -286,7 +303,7 @@ const Navbar = ({ setShowLogin }) => {
 
       {/* Search Bar */}
       {searchOpen && (
-        <div className="absolute w-full z-10  backdrop-blur-lg border-b transition-all duration-500">
+        <div className="absolute w-full z-10 backdrop-blur-lg border-b transition-all duration-500">
           <div className="w-[80%] mx-auto py-4">
             <input
               type="search"

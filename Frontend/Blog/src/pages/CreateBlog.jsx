@@ -24,9 +24,16 @@ export default function CreateBlog() {
     const fetchCategories = async () => {
       try {
         const response = await getCategories();
-        setCategories(response.data || []);
+        if (!response || !response.data) {
+          throw new Error("Invalid response format");
+        }
+        setCategories(response.data);
       } catch (error) {
-        toast.error("Failed to load categories.");
+        console.error("Category fetch error:", error);
+        toast.error(
+          error.response?.data?.message ||
+            "Failed to load categories. Please refresh the page."
+        );
       }
     };
     fetchCategories();
@@ -37,14 +44,22 @@ export default function CreateBlog() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Only JPG, PNG, or WEBP formats are allowed.");
+      return;
+    }
+
     if (file.size > 1024 * 1024) {
-      toast.error("Image must be smaller than 1MB");
+      toast.error("Image must be smaller than 1MB.");
       return;
     }
 
     setImageFile(file);
+
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result);
+    reader.onerror = () => toast.error("Error loading image preview.");
     reader.readAsDataURL(file);
   };
 
@@ -53,6 +68,7 @@ export default function CreateBlog() {
     e.preventDefault();
     if (loading) return;
 
+    // Client-side validation
     if (!title.trim()) return toast.error("Please enter a title.");
     if (!body.trim()) return toast.error("Please enter content.");
     if (!selectedCategory) return toast.error("Please select a category.");
@@ -60,17 +76,39 @@ export default function CreateBlog() {
     setLoading(true);
     try {
       const res = await addPost(selectedCategory, title, body, imageFile);
+      if (!res || !res.data) {
+        throw new Error("Unexpected response from server.");
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setLoading(false);
+      nav(`/detail/${res.data.id}`);
       toast.success("Post created successfully!");
-      setTimeout(() => {
-        nav(`/detail/${res.data.id}`);
-      }, 1200);
     } catch (error) {
-      console.error(error);
-      toast.error("Error creating post. Please try again.");
+      console.error("Post creation error:", error.error.image);
+
+      if (error.error) {
+        // Server responded but with an error
+        if (error.error.category) {
+          toast.error(error.error.category);
+        } else if (error.error.title) {
+          toast.error(error.error.title);
+        } else if (error.error.body) {
+          toast.error(error.error.body);
+        } else if (error.error.image) {
+          toast.error(error.error.image);
+        }
+      } else if (error.request) {
+        // Network error
+        toast.error("Network error. Please check your connection.");
+      } else {
+        // Other unknown error
+        toast.error("An unexpected error occurred.");
+      }
+      setLoading(false);
     }
   };
 
-  // Quill config
   const quillModules = {
     toolbar: [
       [{ header: [1, 2, 3, false] }],
@@ -112,23 +150,29 @@ export default function CreateBlog() {
           <label className="text-base font-semibold text-gray-800">
             Category
           </label>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                disabled={loading}
-                onClick={() => setSelectedCategory(cat.name)}
-                className={`px-4 py-2 line-clamp-1 rounded-lg text-sm font-medium border-2 transition-all ${
-                  selectedCategory === cat.name
-                    ? "bg-red-50 text-red-700 border-red-500"
-                    : "bg-gray-100 text-gray-700 border-transparent hover:border-red-300"
-                } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
+          {categories.length === 0 ? (
+            <p className="text-gray-500 text-sm italic">
+              No categories available.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  disabled={loading}
+                  onClick={() => setSelectedCategory(cat.name)}
+                  className={`px-4 py-2 line-clamp-1 rounded-lg text-sm font-medium border-2 transition-all ${
+                    selectedCategory === cat.name
+                      ? "bg-red-50 text-red-700 border-red-500"
+                      : "bg-gray-100 text-gray-700 border-transparent hover:border-red-300"
+                  } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Title */}
@@ -160,7 +204,6 @@ export default function CreateBlog() {
             formats={quillFormats}
             placeholder="Write your story..."
             readOnly={loading}
-            className="bg-background"
           />
           <p className="text-xs text-muted-foreground text-right pt-2">
             {body.replace(/<[^>]*>/g, "").length}/10000 characters
@@ -186,6 +229,7 @@ export default function CreateBlog() {
                 <button
                   type="button"
                   onClick={() => {
+                    if (loading) return;
                     setImageFile(null);
                     setImagePreview(null);
                   }}

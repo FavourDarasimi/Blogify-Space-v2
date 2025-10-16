@@ -7,8 +7,8 @@ user = settings.AUTH_USER_MODEL
 
 
 class User(AbstractUser):
-    first_name = models.CharField(max_length=10,blank=True,null=True)
-    last_name = models.CharField(max_length=100,blank=True,null=True)
+    first_name = models.CharField(max_length=10)
+    last_name = models.CharField(max_length=100)
     email = models.EmailField(max_length=255,unique=True)
     
 

@@ -2,16 +2,14 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: "http://localhost:8000", // or your API URL
+  withCredentials: true, // CRITICAL: This sends cookies with requests
 });
 
 // === REQUEST INTERCEPTOR ===
+// No longer needed for auth token - cookies are sent automatically
 api.interceptors.request.use(
   async (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers = config.headers || {};
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    // You can add other headers here if needed
     return config;
   },
   (error) => Promise.reject(error)
@@ -23,34 +21,19 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // If we get 401 and haven't retried yet, try to refresh the token
     if (error.response?.status === 401 && !originalRequest?._retry) {
       originalRequest._retry = true;
 
-      const refresh = localStorage.getItem("refresh");
-      if (!refresh) {
-        localStorage.removeItem("token");
-        window.location.href = "/login";
-        return Promise.reject(error);
-      }
-
       try {
-        // Use plain axios here to avoid re-triggering the same interceptor loop.
-        const { data } = await axios.post(
-          "http://localhost:8000/account/token/refresh/",
-          { refresh }
-        );
+        // Call your refresh endpoint - it will read refresh token from cookie
+        await api.post("/account/refresh/");
 
-        if (data.access) {
-          localStorage.setItem("token", data.access);
-          api.defaults.headers = api.defaults.headers || {};
-          api.defaults.headers.Authorization = `Bearer ${data.access}`;
-          originalRequest.headers = originalRequest.headers || {};
-          originalRequest.headers.Authorization = `Bearer ${data.access}`;
-          return api(originalRequest); // retry with new token
-        }
+        // If refresh succeeds, retry the original request
+        // The new access token is now in the cookie
+        return api(originalRequest);
       } catch (refreshError) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("refresh");
+        // Refresh failed - redirect to login
         window.location.href = "/";
         return Promise.reject(refreshError);
       }
@@ -115,14 +98,12 @@ export const getPostDetail = async (id) => {
 
 export const login = async (email, password) => {
   try {
-    const response = await axios.post("http://localhost:8000/account/login/", {
+    // Use the api instance to get cookies set automatically
+    const response = await api.post("/account/login/", {
       username: email,
       password: password,
     });
-    if (response.data) {
-      localStorage.setItem("token", response.data.access);
-      localStorage.setItem("refresh", response.data.refresh);
-    }
+    // No need to manually store tokens - they're in HttpOnly cookies now!
     return response.data;
   } catch (error) {
     throwErr(error);
@@ -132,8 +113,7 @@ export const login = async (email, password) => {
 export const logout = async () => {
   try {
     const response = await api.post("/account/logout/");
-    localStorage.removeItem("token");
-    localStorage.removeItem("refresh");
+    // Cookies are cleared by the backend
     return response.data;
   } catch (error) {
     throwErr(error);
@@ -142,7 +122,7 @@ export const logout = async () => {
 
 export const signup = async (
   username,
-  frst_name,
+  first_name,
   last_name,
   email,
   password
@@ -150,7 +130,7 @@ export const signup = async (
   try {
     const response = await api.post("/account/signup/", {
       username,
-      frst_name,
+      first_name,
       last_name,
       email,
       password,
@@ -171,6 +151,7 @@ export const getTopPost = async (timeframe) => {
     throwErr(error);
   }
 };
+
 export const getFeaturedPost = async () => {
   try {
     const response = await api.get("/blog/featured/posts");
@@ -269,7 +250,7 @@ export const editProfile = async (updatedProfile) => {
     });
     return response.data;
   } catch (error) {
-    return error;
+    throwErr(error);
   }
 };
 

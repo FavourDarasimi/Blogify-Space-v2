@@ -5,6 +5,7 @@ import { RxCross1 } from "react-icons/rx";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { BeatLoader } from "react-spinners";
+import { addComment, getComments } from "../endpoint/api";
 
 const Comments = ({
   post,
@@ -24,9 +25,8 @@ const Comments = ({
         setLoading(true);
         setFetchError(null);
 
-        const response = await axios.get(
-          `http://127.0.0.1:8000/blog/comments/${post}`
-        );
+        const response = await getComments(post);
+        console.log("Fetched comments:", response);
         setComments(response?.data || []);
       } catch (err) {
         console.error("Error fetching comments:", err);
@@ -43,11 +43,7 @@ const Comments = ({
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post(
-        `http://127.0.0.1:8000/blog/comment/create/${post}`,
-        { comment },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await addComment(comment, post);
 
       setComment("");
       setCommentChange(post.comments_count + 1);
